@@ -12,6 +12,9 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/lib/hashing/sha3"
 )
 
+type HashFn func(source []byte, salt []byte) ([]byte, error)
+type HashFunc func(source string, salt []byte) ([]byte, error)
+
 type Hash interface {
 	HashFn(source []byte, salt []byte) ([]byte, error)
 	HashFunc(source string, salt []byte) ([]byte, error)
@@ -33,8 +36,8 @@ func New(hashtype string) (Hash, error) {
 		return sha2.NewSHA2HashType(hashtype)
 	case "SHA3":
 		return sha3.NewSHA3HashType(hashtype)
-	case "XR2":
-		return nil, fmt.Errorf("XR2 not implemented yet")
+	case "X2R":
+		return nil, fmt.Errorf("X2R not implemented yet")
 	default:
 		return nil, fmt.Errorf("%s is not a supported SHA2 hash type", hashtype)
 	}

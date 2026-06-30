@@ -3,6 +3,7 @@ package randbytes
 import (
 	"crypto/rand"
 	"fmt"
+	"math"
 )
 
 // RandomBytes creates a cryptographically secure random byte slice.
@@ -25,4 +26,26 @@ func GenerateSalt(length uint32) ([]byte, error) {
 		return nil, fmt.Errorf("Cryptographic salts should generally contain at least 16 bytes")
 	}
 	return RandomBytes(length)
+}
+
+func RandomBits(length uint32) ([]byte, error) {
+	bytelength := uint32(math.Ceil(float64(length) / 8))
+
+	bytes, err := RandomBytes(bytelength)
+	if err != nil {
+		return nil, fmt.Errorf("error generating random bits: %w", err)
+	}
+
+	// zero out the excess bits
+	excess := bytelength*8 - length
+	if excess > 0 {
+		lastbyte := bytes[len(bytes)-1]
+		// Start with 1 byte of all 1's and then shift 0's on from the left
+		// (because a byte is a uint8) which will result in keeping only the
+		// low-order bits that are not extra.
+		mask := byte(0xff) >> excess
+		bytes[len(bytes)-1] = lastbyte & mask
+	}
+
+	return bytes, nil
 }
