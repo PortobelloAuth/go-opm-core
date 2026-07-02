@@ -36,6 +36,21 @@ func RandomBits(length uint32) ([]byte, error) {
 		return nil, fmt.Errorf("error generating random bits: %w", err)
 	}
 
+	bytes, err = MaskToBits(bytes, length)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func MaskToBits(source []byte, length uint32) ([]byte, error) {
+	bytelength := uint32(math.Ceil(float64(length) / 8))
+	if bytelength > uint32(len(source)) {
+		return nil, fmt.Errorf("%d bits requires %d bytes; source has %d", length, bytelength, len(source))
+	}
+	bytes := source[0:bytelength]
+
 	// zero out the excess bits
 	excess := bytelength*8 - length
 	if excess > 0 {

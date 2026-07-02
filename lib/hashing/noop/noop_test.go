@@ -21,7 +21,7 @@ func TestNoopHashFn(t *testing.T) {
 	}
 
 	if !slices.Equal(input, output) {
-		t.Errorf("Input byte slice '%s' does not match output slice %s", input, output)
+		t.Errorf("Input byte slice '%s' does not match output slice '%s'", input, output)
 	}
 }
 
@@ -39,6 +39,6 @@ func TestNoopHashFunc(t *testing.T) {
 	}
 
 	if input != string(output) {
-		t.Errorf("Input string '%s' does not match output string %s", input, output)
+		t.Errorf("Input string '%s' does not match output string '%s'", input, output)
 	}
 }

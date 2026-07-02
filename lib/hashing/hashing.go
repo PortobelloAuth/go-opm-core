@@ -36,9 +36,7 @@ func New(hashtype string) (Hash, error) {
 		return sha2.NewSHA2HashType(hashtype)
 	case "SHA3":
 		return sha3.NewSHA3HashType(hashtype)
-	case "X2R":
-		return nil, fmt.Errorf("X2R not implemented yet")
 	default:
-		return nil, fmt.Errorf("%s is not a supported SHA2 hash type", hashtype)
+		return nil, fmt.Errorf("%s is not a supported hash type", hashtype)
 	}
 }
