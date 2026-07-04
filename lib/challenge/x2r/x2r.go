@@ -43,6 +43,9 @@ func NewX2RHashType(hashtype string) (*X2R, error) {
 	}
 
 	subtype := parts[2]
+	if subtype == "Noop" {
+		return nil, fmt.Errorf("Noop is not a supported subtype for X2R")
+	}
 	h, err := hashing.New(subtype)
 	if err != nil {
 		return nil, err
