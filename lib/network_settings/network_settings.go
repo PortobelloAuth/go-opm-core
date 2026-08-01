@@ -1,29 +1,29 @@
 package network_settings
 
 import (
-	"github.com/PortobelloAuth/go-opm-core/lib/hashing"
+	"fmt"
+	"strings"
+
+	"github.com/PortobelloAuth/go-opm-core/lib/network_settings/hashrouted"
+	"github.com/PortobelloAuth/go-opm-core/lib/rules"
 )
 
 type NetworkSettings interface {
 	Type() string
-	MatchingRules() []string
-	RoutingKeys() []string
-	HashFunc() hashing.HashFunc
+	MatchingRules() *rules.RuleSet
 	RequestCredentialType() string
 	AuthenticationStyle() string
-	SaltStrategy() string
-	AsymmetricEncryptionType() string
-	SymmetricEncryptionType() string
 }
 
-type HashRoutedChallengeSettings struct {
-	Type                     string
-	MatchingRules            []string
-	RoutingKeys              []string
-	HashFunc                 hashing.HashFunc
-	RequestCredentialType    string
-	AuthenticationStyle      string
-	SaltStrategy             string
-	AsymmetricEncryptionType string
-	SymmetricEncryptionType  string
+func New(specifier string) (NetworkSettings, error) {
+	networktype, remainder, _ := strings.Cut(specifier, "-")
+	switch networktype {
+	case "hash":
+		hashroutingtype, _, _ := strings.Cut(remainder, "-")
+		switch hashroutingtype {
+		case "routed":
+			return hashrouted.New(specifier)
+		}
+	}
+	return nil, fmt.Errorf("%s is not a supported network type", specifier)
 }

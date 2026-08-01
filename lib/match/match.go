@@ -18,4 +18,9 @@ type DemographicSet struct {
 	Settings MatchSettings
 }
 
-func Match() *MatchResult {}
+func Match() *MatchResult {
+	// Failed to match with no confidence
+	return &MatchResult{
+		Matched: false,
+	}
+}

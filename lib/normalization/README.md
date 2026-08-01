@@ -1,20 +1,21 @@
 # Normalization
 
-This package includes several normalization functions. These functions take a string
-input and transform it in a defined manner in order to reduce variations between
-demographic values that should otherwise match.
+This package includes several normalization functions. These functions take a
+string input and transform it in a defined manner in order to reduce variations
+between demographic values that should otherwise match.
 
 Examples include:
 
 - `lowercase` - all letters in the identifier should be converted to lowercase
 - `uppercase` - all letters in the identifier should be converted to uppercase
-- `s/{1}/{2}` (aka `replace`) - all sequences matching the pattern {1} should
-  be replaced with the sequence {2}. This is a simplistic find and replace
-  match that replaces matching sequences as it finds them.
+- `s/{1}/{2}` (aka `replace`) - all sequences matching the pattern {1} should be
+  replaced with the sequence {2}. This is a simplistic find and replace match
+  that replaces matching sequences as it finds them.
 - `whitespace` - whitespace is removed
 - `punctuation` - punctuation, such as `.`, `,`, `#`, `-`, etc. is removed
-- `transliterate` - replace all unicode runes with reasonable ASCII approximations
-  as implemented by [anyascii](https://github.com/anyascii/anyascii)
+- `transliterate` - replace all unicode runes with reasonable ASCII
+  approximations as implemented by
+  [anyascii](https://github.com/anyascii/anyascii)
 - `us-101-key` - all unicode runes are converted to suitable lowercase English
   letters through the `transliterate` and `lowercase` normalizations. This
   appoximates how these runes may be input using a standard US 101-key keyboard

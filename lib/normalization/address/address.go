@@ -29,7 +29,7 @@ func CheckMode() error {
 	case "projectusat":
 		// implementation = projectusat.New
 		return fmt.Errorf("%s address normalization mode is not yet implemented", mode)
-	case "gopostal":
+	case "libpostal":
 		// implementation = gopostal.New
 		return fmt.Errorf("%s address normalization mode is not yet implemented", mode)
 	case "interface":
