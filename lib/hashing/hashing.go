@@ -23,6 +23,8 @@ type Hash interface {
 func New(hashtype string) (Hash, error) {
 	// split hashtype at the first hyphen
 	prefix, _, _ := strings.Cut(hashtype, "-")
+	// TODO: make this switch case insensitive
+	// TODO: make this list plugable, i.e. allow library users to register new algorithms
 	switch prefix {
 	case "Argon2id":
 		return argon2id.NewArgon2idHashType(hashtype)
