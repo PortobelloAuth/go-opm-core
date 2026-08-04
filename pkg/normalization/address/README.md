@@ -28,6 +28,7 @@ import (
 
 func init() {
   lpEndpoint, found := os.LookupEnv("LIBPOSTAL_ENDPOINT")
+  // normalization.Register() must be called before normalization.New()
   normalization.Register(
     "address",
     func(specifier string) (Normalization, error) {
