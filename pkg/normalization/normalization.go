@@ -16,6 +16,78 @@ type Normalization interface {
 	Apply(input string) (string, error)
 }
 
+type NormalizationConstructor func(specifier string) (Normalization, error)
+
+var normalizationRegistery map[string]NormalizationConstructor
+var newCalled = false
+
+func init() {
+	normalizationRegistery = make(map[string]NormalizationConstructor)
+
+	// register the built-in Normalizations
+	builtins := []struct {
+		K string
+		N func(specifier string) (Normalization, error)
+	}{
+		{"lowercase", func(specifier string) (Normalization, error) { return lowercase.New(specifier) }},
+		{"punctuation", func(specifier string) (Normalization, error) { return punctuation.New(specifier) }},
+		{"transliterate", func(specifier string) (Normalization, error) { return transliterate.New(specifier) }},
+		{"uppercase", func(specifier string) (Normalization, error) { return uppercase.New(specifier) }},
+		{"us-101-key", func(specifier string) (Normalization, error) {
+			return NewSequence([]string{
+				"transliterate",
+				"lowercase",
+			})
+		}},
+		{"us-reduced_v0", func(specifier string) (Normalization, error) {
+			return NewSequence([]string{
+				"transliterate",
+				"punctuation",
+				"whitespace",
+				"lowercase",
+			})
+		}},
+		{"whitespace", func(specifier string) (Normalization, error) { return whitespace.New(specifier) }},
+	}
+
+	for _, b := range builtins {
+		normalizationRegistery[b.K] = b.N
+	}
+
+	prefixBuiltins := []struct {
+		K string
+		N func(specifier string) (Normalization, error)
+	}{
+		{"s", func(specifier string) (Normalization, error) { return replace.New(specifier) }},
+	}
+
+	for _, p := range prefixBuiltins {
+		k := prefixKey(p.K)
+		normalizationRegistery[k] = p.N
+	}
+}
+
+func prefixKey(k string) string {
+	return fmt.Sprintf("prefix/%s", k)
+}
+
+func Register(specifier string, fn NormalizationConstructor, isPrefix bool) error {
+	// FIXME?: don't allow this to be called after New()? It makes testing annoying.
+	if newCalled {
+		return fmt.Errorf("Register called after New()")
+	}
+
+	k := specifier
+	if isPrefix {
+		k = prefixKey(specifier)
+	}
+
+	// FIXME?: don't allow overwriting builtins?
+	normalizationRegistery[k] = fn
+
+	return nil
+}
+
 // TODO: consider removing the specifier as an argument for normalizations that don't need it
 // TODO: consider whether we need short prefixes for all normalization specifiers
 // TODO: figure out an interaction with rules that scores changes made by a normalization (or
@@ -23,30 +95,18 @@ type Normalization interface {
 
 // New creates a new Normalization according to the specifier string
 func New(specifier string) (Normalization, error) {
-	switch specifier {
-	case "lowercase":
-		return lowercase.New(specifier)
-	case "punctuation":
-		return punctuation.New(specifier)
-	case "transliterate":
-		return transliterate.New(specifier)
-	case "uppercase":
-		return uppercase.New(specifier)
-	case "us-101-key":
-		return NewSequence([]string{"transliterate", "lowercase"})
-	case "us-reduced_v0":
-		return NewSequence([]string{"transliterate", "punctuation", "whitespace", "lowercase"})
-	case "whitespace":
-		return whitespace.New(specifier)
-	default:
-		prefix, _, _ := strings.Cut(specifier, "/")
-		switch prefix {
-		case "s":
-			return replace.New(specifier)
-		}
-
-		return nil, fmt.Errorf("%s is not a supported normalization", specifier)
+	newCalled = true
+	prefix, _, found := strings.Cut(specifier, "/")
+	k := specifier
+	if found {
+		k = prefixKey(prefix)
 	}
+	fn, ok := normalizationRegistery[k]
+	if ok {
+		return fn(specifier)
+	}
+
+	return nil, fmt.Errorf("%s is not a registered normalization", specifier)
 }
 
 type NormalizationSequence struct {
