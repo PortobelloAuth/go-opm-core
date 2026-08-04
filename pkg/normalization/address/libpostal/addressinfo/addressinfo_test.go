@@ -10,11 +10,11 @@ func TestFormat(t *testing.T) {
 	addr := &addressinfo.Address{
 		PrimaryNumber:       "123",
 		StreetName:          "Main",
-		StreetSuffix:        "Street",
-		SecondaryDesignator: "Apartment",
+		StreetSuffix:        "St",
+		SecondaryDesignator: "Apt",
 		SecondaryNumber:     "4",
 		City:                "Springfield",
-		Region:              "Illinois",
+		Region:              "IL",
 		Postal:              "62701",
 	}
 	want := "123 MAIN ST APT 4\nSPRINGFIELD IL 62701"

@@ -1,10 +1,13 @@
 package addressinfo
 
 import (
+	"regexp"
 	"strings"
 
 	anyascii "github.com/anyascii/go"
 )
+
+var whitespaceRegExp = regexp.MustCompile(`[\s]+`)
 
 type Address struct {
 	BuisinessName string
@@ -36,6 +39,7 @@ func (a *Address) Format() string {
 		a.SecondaryDesignator,
 		a.SecondaryNumber,
 	}, " ")
+	street = whitespaceRegExp.ReplaceAllString(street, " ")
 
 	cityline := strings.Join([]string{
 		a.City,

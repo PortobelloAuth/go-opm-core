@@ -74,7 +74,7 @@ func prefixKey(k string) string {
 func Register(specifier string, fn NormalizationConstructor, isPrefix bool) error {
 	// FIXME?: don't allow this to be called after New()? It makes testing annoying.
 	if newCalled {
-		return fmt.Errorf("Register called after New()")
+		return fmt.Errorf("Register() called after New()")
 	}
 
 	k := specifier
