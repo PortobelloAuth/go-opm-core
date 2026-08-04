@@ -1,7 +1,7 @@
 # Address Normalization
 
 Address normalization is complicated. The appropriate standard to apply can vary
-significantly based on the locality in which the address exists adn the use case
+significantly based on the locality in which the address exists and the use case
 for which the address is being normalized. Therefore this module provides
 multiple implementation options.
 
@@ -12,14 +12,34 @@ multiple implementation options.
   implements the
   [Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf)
   (which is an extension of the USPS publication 28 standard) directly in Go
-- `libpostal` (not implemented yet) an http API wrapper around
+- `libpostal` (partially implemented) an http API wrapper around
   [pelias/libpostal-service](https://hub.docker.com/r/pelias/libpostal-service/tags)
   to normalize international addresses using libpostal, which is derrived from
   Open Street Map data
-- `interface` (test implementation) allows registering a constructor for an
-  implementation of the `address.AddressNormalization` interface. This enables
-  the use of tools like the USPS Address normalization API and other address
-  normalization APIs.
+
+You are required to Register the address normalization implementation that you want
+to use; there is no default at this time.
+
+```go
+import (
+  "github.com/PortobelloAuth/go-opm-core/pkg/normalization/address/libpostal"
+  "github.com/PortobelloAuth/go-opm-core/pkg/normalization"
+)
+
+func init() {
+  lpEndpoint, found := os.LookupEnv("LIBPOSTAL_ENDPOINT")
+  normalization.Register(
+    "address",
+    func(specifier string) (Normalization, error) {
+      return libpostal.NewService(
+        lpEndpoint,
+        300 * time.Millisecond
+      )
+    },
+    false,
+  )
+}
+```
 
 ## Notes
 
