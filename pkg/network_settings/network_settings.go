@@ -45,16 +45,16 @@ type NetworkSettings interface {
 func New(specifier string) (NetworkSettings, error) {
 	newCalled = true
 
-	parts := strings.Split(strings.ToLower(specifier), "-")
-	prefix := ""
-	sep := ""
-	for _, p := range parts {
-		prefix = fmt.Sprintf("%s%s%s", prefix, sep, p)
+	sep := "-"
+	parts := strings.Split(strings.ToLower(specifier), sep)
+
+	for len(parts) > 0 {
+		prefix := strings.Join(parts, sep)
 		fn, ok := netSettingsRegistery[prefix]
 		if ok {
 			return fn(specifier)
 		}
-		sep = "-"
+		parts = parts[0 : len(parts)-1]
 	}
 
 	return nil, fmt.Errorf("%s is not a supported network type", specifier)
