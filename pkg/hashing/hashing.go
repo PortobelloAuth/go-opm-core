@@ -20,7 +20,7 @@ var newCalled = false
 func init() {
 	hashingRegistery = make(map[string]HashingConstructor)
 
-	// register the built-in Challenges
+	// register the built-in Hash types
 	builtins := []struct {
 		K string
 		N func(hashtype string) (Hash, error)

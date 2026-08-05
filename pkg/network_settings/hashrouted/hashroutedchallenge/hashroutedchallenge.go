@@ -5,8 +5,19 @@ import (
 	"strings"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
+	"github.com/PortobelloAuth/go-opm-core/pkg/network_settings"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
+
+func init() {
+	err := network_settings.Register(
+		"hash-routed-challenge",
+		func(specifier string) (network_settings.NetworkSettings, error) { return New(specifier) },
+	)
+	if err != nil {
+		panic(err)
+	}
+}
 
 type HashRoutedChallengeSettings struct {
 	// should always be "hash-routed-challenge"

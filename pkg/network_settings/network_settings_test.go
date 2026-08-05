@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/network_settings"
+	_ "github.com/PortobelloAuth/go-opm-core/pkg/network_settings/hashrouted/hashroutedchallenge"
 )
 
 func TestNewNetworkSettings(t *testing.T) {
@@ -16,12 +17,16 @@ func TestNewNetworkSettings(t *testing.T) {
 		t.Fatalf("Expected nil NetworkSettings for unsupported network specifier: %s", unsupported)
 	}
 
-	hashroutedchallenge := "hash-routed-challenge"
-	hrc, err := network_settings.New(hashroutedchallenge)
+	hrctype := "hash-routed-challenge"
+	hrc, err := network_settings.New(hrctype)
 	if err != nil {
-		t.Fatalf("Error creating NetworkSettings for network specifier: %s error: %s", hashroutedchallenge, err)
+		t.Fatalf("Error creating NetworkSettings for network specifier: %s error: %s", hrctype, err)
 	}
 	if hrc == nil {
-		t.Fatalf("Failed to create NetworkSettings for network specifier: %s", hashroutedchallenge)
+		t.Fatalf("Failed to create NetworkSettings for network specifier: %s", hrctype)
 	}
+}
+
+func TestUnmarshallJSON(t *testing.T) {
+
 }
