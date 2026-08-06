@@ -1,0 +1,49 @@
+package goopmcore
+
+import (
+	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
+	"github.com/PortobelloAuth/go-opm-core/pkg/match"
+	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
+)
+
+var noopHash hashing.Hash
+
+func init() {
+	var err error
+	noopHash, err = hashing.New("Noop")
+	if err != nil {
+		panic(err)
+	}
+}
+
+// PlaintextMatch is a non-privacy preserving matching function to be used when both sets of identifying information
+// are known locally. It is implemented using Match(), with a no-op hashing function, an empty salt, an encode
+// function that converts the resulting byte slices back to strings, and the provided rule set.
+func PlaintextMatch(check *match.Demographics, against *match.Demographics, withRules *rules.RuleSet) (bool, error) {
+	return Match(
+		check,
+		&match.HashedDemographics{
+			HashAlgorithm: noopHash.HashFunc,
+			Salt:          []byte{}, // empty salt doesn't matter for Noop
+			Hashes:        against.Raw,
+			Encode: func(b []byte) (string, error) {
+				return string(b), nil
+			},
+			RuleSet: withRules,
+		},
+	)
+}
+
+// Match is the primary matching function of this library. It technically is a simple wrapper around
+// match.Match().
+func Match(check *match.Demographics, against *match.HashedDemographics) (bool, error) {
+	result, err := match.Match(
+		check,
+		against,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return result.Matched, nil
+}

@@ -145,7 +145,6 @@ func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
 		}
 	}
 
-	// Failed to match
 	return &MatchResult{
 		Matched: matched,
 		// FIXME: fill out the Detail object!!
