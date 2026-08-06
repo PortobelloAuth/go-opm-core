@@ -17,8 +17,8 @@ multiple implementation options.
   to normalize international addresses using libpostal, which is derrived from
   Open Street Map data
 
-You are required to Register the address normalization implementation that you want
-to use; there is no default at this time.
+You are required to Register the address normalization implementation that you
+want to use; there is no default at this time.
 
 ```go
 import (
