@@ -3,6 +3,7 @@ package match
 import (
 	"fmt"
 
+	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
@@ -87,7 +88,7 @@ func recursiveHashedDemographics(parentnorms *normalization.NormalizationSequenc
 			}
 			altFn := d.Alternatives
 			if altFn == nil {
-				altFn = rules.IdentityDemographicAlternativesFn
+				altFn = demographicalts.IdentityDemographicAlternativesFn
 			}
 			alts := altFn(rawvalue, d.Label, d.Limit)
 			// Now properly populate the collected map
