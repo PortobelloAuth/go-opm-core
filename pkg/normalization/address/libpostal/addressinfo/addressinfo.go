@@ -10,7 +10,7 @@ import (
 var whitespaceRegExp = regexp.MustCompile(`[\s]+`)
 
 type Address struct {
-	BuisinessName string
+	BusinessName string
 
 	// Street line elements
 	PrimaryNumber       string
@@ -52,8 +52,8 @@ func (a *Address) Format() string {
 		cityline,
 	}
 
-	if len(a.BuisinessName) > 0 {
-		multiline = append([]string{a.BuisinessName}, multiline...)
+	if len(a.BusinessName) > 0 {
+		multiline = append([]string{a.BusinessName}, multiline...)
 	}
 
 	if len(a.Country) > 0 {

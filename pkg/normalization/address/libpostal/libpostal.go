@@ -143,7 +143,7 @@ func (l *LibpostalHttpService) Apply(input string) (string, error) {
 	for _, v := range parsed {
 		switch v.Label {
 		case LIBPOSTAL_LABEL_HOUSE:
-			a.BuisinessName = v.Value
+			a.BusinessName = v.Value
 		case LIBPOSTAL_LABEL_HOUSE_NUMBER:
 			a.PrimaryNumber = v.Value
 		case LIBPOSTAL_LABEL_UNIT:
