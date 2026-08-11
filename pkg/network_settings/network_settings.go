@@ -73,7 +73,7 @@ func (u *TypedNetworkSettings) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &a); err != nil {
 		return fmt.Errorf("Error parsing TypedNetworkSettings: %w", err)
 	}
-	fmt.Printf("Detected NetworkSettings Type: %s\n", a.Type)
+
 	u.Type = a.Type
 
 	// Call New() to get a NetworkSettings instance of the specified type

@@ -1,7 +1,6 @@
 package match_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
@@ -80,13 +79,6 @@ func TestMatch(t *testing.T) {
 		rawDemographics := &match.Demographics{
 			Raw: tc.Raw,
 		}
-
-		hashed, err := match.NewHashedDemographics(rawDemographics, noopHash.HashFunc, noopSalt, testRules, match.HashToString)
-		if err != nil {
-			t.Fatalf("Error creating match hashes: %s", err)
-		}
-
-		fmt.Printf("Hashes: %v\n", hashed.Hashes)
 
 		result, err := match.Match(
 			rawDemographics,

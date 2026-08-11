@@ -49,7 +49,6 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 	if err != nil {
 		return nil, fmt.Errorf("Unable to apply RuleSet: %w", err)
 	}
-	fmt.Printf("flattened ruleset: %v\n", flatrs)
 
 	hashErrors := make([]error, 0)
 	hashes := maps.Collect(func(yield func(string, []string) bool) {
@@ -127,7 +126,7 @@ func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error calculating matching hashes: %w", err)
 	}
-	fmt.Printf("calculated hashes: %v\n", calc.Hashes)
+
 	return calc.Match(comp)
 }
 
@@ -139,15 +138,15 @@ func (calc *HashedDemographics) Match(comp *HashedDemographics) (*MatchResult, e
 	// for a Rule needs to match for the Rule to match. Only one Rule for a RuleSet needs to match.
 	detail := make(map[string]bool)
 	matched := false
-	fmt.Printf("flattened rule set: %v\n", calc.flattenedRuleSet)
+
 	// iterate the flattened rule set for rules to check
 	for _, flatrule := range calc.flattenedRuleSet {
 		matchedRule := 0
-		fmt.Printf("flattened rule: %v\n", flatrule)
+
 		// check each component of the flat rule to see if it has a matching hash
 		for _, rd := range flatrule.Components {
 			hashkey := ruleComponentKey(flatrule.Label, rd.Key)
-			fmt.Printf(" component: %v\n", hashkey)
+
 			detail[hashkey] = false
 			have, ok := calc.Hashes[hashkey]
 			if !ok {
@@ -174,7 +173,7 @@ func (calc *HashedDemographics) Match(comp *HashedDemographics) (*MatchResult, e
 				matchedRule += 1
 			}
 		}
-		fmt.Printf("%s matchedRule: %d number of components: %d\n", flatrule.Label, matchedRule, len(flatrule.Components))
+
 		if matchedRule == len(flatrule.Components) {
 			matched = true
 		}

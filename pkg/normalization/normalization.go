@@ -132,7 +132,6 @@ func NewSequence(order []string) (*NormalizationSequence, error) {
 }
 
 func (seq *NormalizationSequence) Apply(input string) (string, error) {
-	fmt.Printf("NormalizationSequence: %v\n", seq)
 	result := input
 
 	// guard against rule.Rule.Normalizations not being initialized when
