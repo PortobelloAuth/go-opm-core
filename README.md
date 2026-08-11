@@ -29,12 +29,11 @@ will be true.
 
 ## TODO
 
-- fix the `match.Match()` implementation to properly generate hashes per Rule
-  rather than per demographic
-- implement the hash-routed-challenge network type and define the (probable)
-  `Request()`, `Register()`, and `Respond()` APIs
+- implement a working address parser and normalizer (using go-projectusat)
 - implement a RuleSet corresponding to the current CMS HealthTech Ecosystem
   patient matching rules
+- implement the hash-routed-challenge network type and define the (probable)
+  `Request()`, `Register()`, and `Respond()` APIs
 - implement other meaningful rule sets referenced in TEFCA SoPs and HL7 FHIR
   $match standards
 - add a network authentication type package
