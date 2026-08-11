@@ -20,17 +20,20 @@ func init() {
 // are known locally. It is implemented using Match(), with a no-op hashing function, an empty salt, an encode
 // function that converts the resulting byte slices back to strings, and the provided rule set.
 func PlaintextMatch(check *match.Demographics, against *match.Demographics, withRules *rules.RuleSet) (bool, error) {
+	comp, err := match.NewHashedDemographics(
+		against,
+		noopHash.HashFunc,
+		[]byte{}, // empty salt doesn't matter for Noop
+		withRules,
+		match.HashToString,
+	)
+	if err != nil {
+		return false, err
+	}
+
 	return Match(
 		check,
-		&match.HashedDemographics{
-			HashAlgorithm: noopHash.HashFunc,
-			Salt:          []byte{}, // empty salt doesn't matter for Noop
-			Hashes:        against.Raw,
-			Encode: func(b []byte) (string, error) {
-				return string(b), nil
-			},
-			RuleSet: withRules,
-		},
+		comp,
 	)
 }
 

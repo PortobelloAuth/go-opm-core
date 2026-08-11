@@ -132,12 +132,23 @@ func NewSequence(order []string) (*NormalizationSequence, error) {
 }
 
 func (seq *NormalizationSequence) Apply(input string) (string, error) {
+	fmt.Printf("NormalizationSequence: %v\n", seq)
 	result := input
-	var err error
-	for _, norm := range seq.Seq {
-		result, err = norm.Apply(result)
-		if err != nil {
-			return "", err
+
+	// guard against rule.Rule.Normalizations not being initialized when
+	// when there are no normalizations at that level.
+	if seq != nil {
+		var err error
+		for _, norm := range seq.Seq {
+			if norm == nil {
+				// in case we haven't filtered normalizations effectively
+				// when building the sequence
+				continue
+			}
+			result, err = norm.Apply(result)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 	return result, nil

@@ -27,8 +27,8 @@ func TestPlaintextMatch(t *testing.T) {
 	simpleRules := &rules.RuleSet{
 		Rules: []rules.Rule{
 			{Label: "fullname", Components: []rules.RuleDemographic{
-				{Label: "given", Demographic: "given"},
-				{Label: "family", Demographic: "family"},
+				{Label: "given", Key: "given"},
+				{Label: "family", Key: "family"},
 			}},
 		},
 	}

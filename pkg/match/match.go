@@ -2,10 +2,11 @@ package match
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
-	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
 
@@ -23,11 +24,18 @@ type Demographics struct {
 }
 
 type HashedDemographics struct {
-	HashAlgorithm hashing.HashFunc
-	Salt          []byte
-	RuleSet       *rules.RuleSet
-	Hashes        map[string]string
-	Encode        func([]byte) (string, error)
+	HashAlgorithm    hashing.HashFunc
+	Salt             []byte
+	RuleSet          *rules.RuleSet
+	flattenedRuleSet rules.FlattenedRuleSet
+	// Hahses contains a map of normalized and hashed demographic alternatives, keyed by the flattened
+	// rule label that produced it.
+	Hashes map[string][]string
+	Encode func([]byte) (string, error)
+}
+
+func ruleComponentKey(label string, key string) string {
+	return fmt.Sprintf("%s|%s", label, key)
 }
 
 // NewHashedDemographics creates HashedDemographics from Demographics by applying the RuleSet Normalizations
@@ -36,84 +44,72 @@ type HashedDemographics struct {
 func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []byte, rset *rules.RuleSet, encode func([]byte) (string, error)) (*HashedDemographics, error) {
 	// walk the RuleSet tree collecting the demographic keys and Normlizations that need to be applied. Prefix
 	// the Rule.Label to demographics so that hashes for different rules are mapped appropriately.
-	hashes := make(map[string]string, 0)
-	err := recursiveHashedDemographics(rset.Normalizations, raw, hashFn, salt, rset, encode, hashes)
+
+	flatrs, err := rset.Flatten()
 	if err != nil {
 		return nil, fmt.Errorf("Unable to apply RuleSet: %w", err)
 	}
+	fmt.Printf("flattened ruleset: %v\n", flatrs)
 
-	return &HashedDemographics{
-		HashAlgorithm: hashFn,
-		Salt:          salt,
-		RuleSet:       rset,
-		Hashes:        hashes,
-		Encode:        encode,
-	}, nil
-}
+	hashErrors := make([]error, 0)
+	hashes := maps.Collect(func(yield func(string, []string) bool) {
+		for _, flatrule := range flatrs {
+			for _, rd := range flatrule.Components {
+				v, ok := raw.Raw[rd.Key]
+				if ok {
+					normv := v
+					if rd.Normalizations != nil {
+						var err error
+						normv, err = rd.Normalizations.Apply(v)
+						if err != nil {
+							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %s for %s: %w", v, flatrule.Label, err))
+							return
+						}
+					}
 
-func recursiveHashedDemographics(parentnorms *normalization.NormalizationSequence, raw *Demographics, hashFn hashing.HashFunc, salt []byte, rset *rules.RuleSet, encode func([]byte) (string, error), collected map[string]string) error {
-	for _, rule := range rset.Rules {
-		if rule.Set != nil {
-			sequence := []normalization.Normalization{parentnorms, rule.Set.Normalizations}
-			err := recursiveHashedDemographics(
-				&normalization.NormalizationSequence{Seq: sequence},
-				raw,
-				hashFn,
-				salt,
-				rule.Set,
-				encode,
-				collected,
-			)
-			if err != nil {
-				return err
-			}
-			// A Rule may only contain a RuleSet OR a Components, not both
-			continue
-		}
-		// NOTE: (FIXME) avoid recomputing hashes for rules that are using the same demographic,
-		// normalizations, and fuzzy matching logic.
-		// TODO: all rule components: demographics, normalizations, alternative functions, etc. have (or can have)
-		// a unique namespaced identifier (aka specifier) that exists as part of the Rule configuration DSL (which
-		// is a subset of the NetworkSettings DSL.) A defined, ordered serialization of thes specifiers should
-		// allow us to use them to build a key to look up the hashes we need. The original strawman spec's DSL
-		// might be (mostly) sufficient.
-		for _, d := range rule.Components {
-			var err error
-			// Run each component through d.Alternatives(), etc.
-			fmt.Printf("Demographic: %v\n", d)
-			rawvalue, ok := raw.Raw[d.Demographic]
-			if !ok || len(rawvalue) < 1 {
-				// skip
-				continue
-			}
-			altFn := d.Alternatives
-			if altFn == nil {
-				altFn = demographicalts.IdentityDemographicAlternativesFn
-			}
-			alts := altFn(rawvalue, d.Label, d.Limit)
-			// Now properly populate the collected map
-			for _, a := range alts {
-				n := a.Text
-				if parentnorms != nil {
-					n, err = parentnorms.Apply(a.Text)
-					if err != nil {
-						return fmt.Errorf("failed to normalize text for %s: %w", a.Label, err)
+					altFn := demographicalts.IdentityDemographicAlternativesFn
+					if rd.Alternatives != nil {
+						altFn = rd.Alternatives
+					}
+					alts := altFn(normv, rd.Key, rd.Limit)
+					althashes := slices.Collect(func(yield func(string) bool) {
+						for _, a := range alts {
+							althashbytes, err := hashFn(a.Text, salt)
+							if err != nil {
+								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %s for %s: %w", a.Text, flatrule.Label, err))
+								return
+							}
+							althash, err := encode(althashbytes)
+							if err != nil {
+								hashErrors = append(hashErrors, fmt.Errorf("Error encoding %s hash for %s: %w", a.Text, flatrule.Label, err))
+								return
+							}
+							if !yield(althash) {
+								return
+							}
+						}
+					})
+					hashkey := ruleComponentKey(flatrule.Label, rd.Key)
+					if !yield(hashkey, althashes) {
+						return
 					}
 				}
-				h, err := hashFn(n, salt)
-				if err != nil {
-					return fmt.Errorf("failed to generte hash for %s: %w", a.Label, err)
-				}
-				// encode hashes to string (in most cases base64url)
-				hstr, err := encode(h)
-				if err != nil {
-					return fmt.Errorf("failed to encode hash for %s: %w", a.Label, err)
-				}
-				collected[a.Label] = hstr
 			}
 		}
+	})
+
+	if len(hashErrors) > 0 {
+		return nil, hashErrors[0]
 	}
-	return nil
+
+	return &HashedDemographics{
+		HashAlgorithm:    hashFn,
+		Salt:             salt,
+		RuleSet:          rset,
+		flattenedRuleSet: flatrs,
+		Hashes:           hashes,
+		Encode:           encode,
+	}, nil
 }
 
 // Match takes a raw set of demographics and a hashed set of demographics, which contains a RuleSet, a
@@ -129,18 +125,57 @@ func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
 		comp.Encode,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Error during matching: %w", err)
+		return nil, fmt.Errorf("Error calculating matching hashes: %w", err)
 	}
+	fmt.Printf("calculated hashes: %v\n", calc.Hashes)
+	return calc.Match(comp)
+}
 
-	fmt.Printf("calculated hashes: %v\n", calc)
-	// TODO: check the Rules to see if the needed hashes match. The Hashes object should only be
-	// one level deep, so, if each hash represents a full rule variant, we just need to search
-	// the comp object and calc object for keys that match and have matching values.
-	// FIXME: without the DSL to define hashes on a per variant basis, this check isn't quite valid!!
+func (calc *HashedDemographics) Match(comp *HashedDemographics) (*MatchResult, error) {
+
+	// check the resulting hashes maps, which should be keyed by the rule labels for the rules that
+	// generate them, to see which rules actually matched. The values in the hash maps are lists of
+	// hashes to support demographic alternatives (nick names, fuzzy matching, etc.). Only one hash
+	// for a Rule needs to match for the Rule to match. Only one Rule for a RuleSet needs to match.
+	detail := make(map[string]bool)
 	matched := false
-	for k, expected := range comp.Hashes {
-		found, ok := calc.Hashes[k]
-		if ok && found == expected {
+	fmt.Printf("flattened rule set: %v\n", calc.flattenedRuleSet)
+	// iterate the flattened rule set for rules to check
+	for _, flatrule := range calc.flattenedRuleSet {
+		matchedRule := 0
+		fmt.Printf("flattened rule: %v\n", flatrule)
+		// check each component of the flat rule to see if it has a matching hash
+		for _, rd := range flatrule.Components {
+			hashkey := ruleComponentKey(flatrule.Label, rd.Key)
+			fmt.Printf(" component: %v\n", hashkey)
+			detail[hashkey] = false
+			have, ok := calc.Hashes[hashkey]
+			if !ok {
+				// we don't have the calculated hash (!?!?); check the next rule
+				continue
+			}
+			check, ok := comp.Hashes[hashkey]
+			if !ok {
+				// we don't have the comparison hash; check the next rule
+				continue
+			}
+			found := false
+			for _, havehash := range have {
+
+				for _, comphash := range check {
+					// only one of the hash alternatives needs to match for each component
+					if ok && havehash == comphash {
+						found = true
+					}
+				}
+			}
+			if found {
+				detail[hashkey] = true
+				matchedRule += 1
+			}
+		}
+		fmt.Printf("%s matchedRule: %d number of components: %d\n", flatrule.Label, matchedRule, len(flatrule.Components))
+		if matchedRule == len(flatrule.Components) {
 			matched = true
 		}
 	}
@@ -148,6 +183,10 @@ func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
 	return &MatchResult{
 		Matched: matched,
 		// FIXME: fill out the Detail object!!
-		Detail: make(map[string]bool),
+		Detail: detail,
 	}, nil
+}
+
+func HashToString(b []byte) (string, error) {
+	return string(b), nil
 }
