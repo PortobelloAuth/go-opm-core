@@ -15,6 +15,10 @@ Person Matching, without the operational concerns of Requestors, Responders, and
 Facilitators. Each package is intended to isolate and address an important,
 focused concern.
 
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE.md) file for details.
+
 ## Concepts
 
 The top level package exposes two functions, `Match()` and `PlaintextMatch()`.
