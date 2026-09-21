@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/digits"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/dob"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/lowercase"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/phone"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/punctuation"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/replace"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/transliterate"
@@ -29,7 +32,10 @@ func init() {
 		K string
 		N func(specifier string) (Normalization, error)
 	}{
+		{"digits_only", func(specifier string) (Normalization, error) { return digits.New(specifier) }},
+		{"dob_iso", func(specifier string) (Normalization, error) { return dob.New(specifier) }},
 		{"lowercase", func(specifier string) (Normalization, error) { return lowercase.New(specifier) }},
+		{"phone_e164", func(specifier string) (Normalization, error) { return phone.New(specifier) }},
 		{"punctuation", func(specifier string) (Normalization, error) { return punctuation.New(specifier) }},
 		{"transliterate", func(specifier string) (Normalization, error) { return transliterate.New(specifier) }},
 		{"uppercase", func(specifier string) (Normalization, error) { return uppercase.New(specifier) }},
