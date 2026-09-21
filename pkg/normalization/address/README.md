@@ -7,7 +7,7 @@ multiple implementation options.
 
 ## Options
 
-- `projectusat` - (not implemented yet) employs
+- `projectusat` - employs
   [go-projectusat](https://github.com/PortobelloAuth/go-projectusat) which
   implements the
   [Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf)
@@ -36,6 +36,29 @@ func init() {
         lpEndpoint,
         300 * time.Millisecond
       )
+    },
+    false,
+  )
+}
+```
+
+To use the Project US@ implementation instead, wire a parser behind it:
+
+```go
+import (
+  "github.com/PortobelloAuth/go-opm-core/pkg/normalization"
+  "github.com/PortobelloAuth/go-opm-core/pkg/normalization/address/projectusat"
+  "github.com/poetic-systems/addressparsers/parse"
+)
+
+func init() {
+  // the parser and its reference data are the caller's choice; go-projectusat's
+  // built-in parser is not implemented yet, so one is required
+  p := parse.New(parse.Options{UseReferenceData: true})
+  normalization.Register(
+    "address",
+    func(specifier string) (normalization.Normalization, error) {
+      return projectusat.New(p, nil)
     },
     false,
   )
