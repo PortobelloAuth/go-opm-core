@@ -26,3 +26,9 @@ Examples include:
   not cover all cases, it is intended to account for many of the variations that
   are likely to appear in demographic data that has been digitally recorded by
   humans in the United States using a keyboard.
+- `digits_only` - everything but the digits `0`-`9` is removed, for identifiers
+  such as the last four of an SSN
+- `phone_e164` - a phone number is reduced to its digits, and a ten digit
+  number is given the US country code `1`
+- `dob_iso` - a date of birth already in `YYYY-MM-DD` form is trimmed and
+  kept; anything else is passed through unchanged rather than rejected
