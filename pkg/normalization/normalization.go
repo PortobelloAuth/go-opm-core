@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/address"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/lowercase"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/punctuation"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/replace"
@@ -29,6 +30,7 @@ func init() {
 		K string
 		N func(specifier string) (Normalization, error)
 	}{
+		{"address", func(specifier string) (Normalization, error) { return address.New(specifier) }},
 		{"lowercase", func(specifier string) (Normalization, error) { return lowercase.New(specifier) }},
 		{"punctuation", func(specifier string) (Normalization, error) { return punctuation.New(specifier) }},
 		{"transliterate", func(specifier string) (Normalization, error) { return transliterate.New(specifier) }},
