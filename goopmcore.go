@@ -19,8 +19,10 @@ func init() {
 // PlaintextMatch is a non-privacy preserving matching function to be used when both sets of identifying information
 // are known locally. It is implemented using Match(), with a no-op hashing function, an empty salt, an encode
 // function that converts the resulting byte slices back to strings, and the provided rule set.
+// NOTE: this API explicitly ignores any normalization and hashing errors that may occur
+// so that it can return a simple boolean value
 func PlaintextMatch(check *match.Demographics, against *match.Demographics, withRules *rules.RuleSet) (bool, error) {
-	comp, err := match.NewHashedDemographics(
+	comp, _, err := match.NewHashedDemographics(
 		against,
 		noopHash.HashFunc,
 		[]byte{}, // empty salt doesn't matter for Noop
@@ -39,6 +41,9 @@ func PlaintextMatch(check *match.Demographics, against *match.Demographics, with
 
 // Match is the primary matching function of this library. It technically is a simple wrapper around
 // match.Match().
+// NOTE: this API explicitly ignores any normalization and hashing errors that occur
+// so that it can return a simple boolean value. Callers interested in these errors should use
+// match.Match() instead.
 func Match(check *match.Demographics, against *match.HashedDemographics) (bool, error) {
 	result, err := match.Match(
 		check,

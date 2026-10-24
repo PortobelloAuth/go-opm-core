@@ -15,6 +15,11 @@ type MatchResult struct {
 	Matched bool
 	// Detail contains information about which specifc demographics were and were not matched
 	Detail map[string]bool
+	// HashError contains any normalization and hashing errors encountering during hashing.
+	// These errors specifically DO NOT block matching, though they do prevent the use of any
+	// Rules that rely on them. They are therefore returned as part of the MatchResult, not
+	// as distinct error return value.
+	HashError error
 	// For now, MatchResult is a deterministic true/false result
 	// In the future it may contain the threshold used in a binary statistical model along with a
 	// confidence interval and other metadata in order to accomodate rules based on such models
@@ -42,13 +47,18 @@ func ruleComponentKey(label string, key string) string {
 // NewHashedDemographics creates HashedDemographics from Demographics by applying the RuleSet Normalizations
 // and the supplied hashing function. Only demographics identified in the RuleSet are set in the resulting
 // HashedDemographics Hashes map.
-func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []byte, rset *rules.RuleSet, encode func([]byte) (string, error)) (*HashedDemographics, error) {
+// NOTE: NewHashedDemographics returns the HashedDemographics and two potentially non-nil errors. The first
+// containins all of the normalization and hashing errors that occured while applying the RuleSet to the
+// raw Demographics. This error is informational and is added to the MatchResult by Match() as HashError. The
+// second error carries fatal errors indicating that the whole hash operation has failed. Callers must be
+// aware of both kinds of errors.
+func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []byte, rset *rules.RuleSet, encode func([]byte) (string, error)) (*HashedDemographics, error, error) {
 	// walk the RuleSet tree collecting the demographic keys and Normlizations that need to be applied. Prefix
 	// the Rule.Label to demographics so that hashes for different rules are mapped appropriately.
 
 	flatrs, err := rset.Flatten()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to apply RuleSet: %w", err)
+		return nil, nil, fmt.Errorf("Unable to apply RuleSet: %w", err)
 	}
 
 	hashErrors := make([]error, 0)
@@ -105,7 +115,7 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 		flattenedRuleSet: flatrs,
 		Hashes:           hashes,
 		Encode:           encode,
-	}, errors.Join(hashErrors...)
+	}, errors.Join(hashErrors...), nil
 }
 
 // Match takes a raw set of demographics and a hashed set of demographics, which contains a RuleSet, a
@@ -113,20 +123,27 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 // using the RuleSet Normalizations, applies the hashing function, and compares the resulting values
 // to the hashed set to see if any of the RuleSet's Rules match.
 func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
-	calc, hasherr := NewHashedDemographics(
+	calc, hasherr, err := NewHashedDemographics(
 		raw,
 		comp.HashAlgorithm,
 		comp.Salt,
 		comp.RuleSet,
 		comp.Encode,
 	)
+	if err != nil {
+		return nil, err
+	}
 	if calc == nil {
 		return nil, fmt.Errorf("Unable to calculate matching hashes: %w", hasherr)
 	}
 
 	matched, err := calc.Match(comp)
+	if err != nil {
+		return nil, err
+	}
+	matched.HashError = hasherr
 
-	return matched, errors.Join(err, hasherr)
+	return matched, nil
 }
 
 func (calc *HashedDemographics) Match(comp *HashedDemographics) (*MatchResult, error) {

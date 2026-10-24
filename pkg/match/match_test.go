@@ -260,8 +260,12 @@ func TestMatchWithErrors(t *testing.T) {
 				RuleSet:       testRules,
 			},
 		)
-		if !errors.Is(err, tc.Error) {
-			t.Fatalf("Expected match error %q to be %q", err, tc.Error)
+		if err != nil {
+			t.Fatalf("Unexpected returned error from Match() %q", err)
+		}
+
+		if !errors.Is(result.HashError, tc.Error) {
+			t.Fatalf("Expected match result HashError %q to be %q", err, tc.Error)
 		}
 
 		if tc.Result != result.Matched {
