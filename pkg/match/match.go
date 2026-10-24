@@ -61,7 +61,7 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 						var err error
 						normv, err = rd.Normalizations.Apply(v)
 						if err != nil {
-							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %s for %s: %w", v, flatrule.Label, err))
+							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %s for %s: %w", rd.Key, flatrule.Label, err))
 							return
 						}
 					}
@@ -75,12 +75,12 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 						for _, a := range alts {
 							althashbytes, err := hashFn(a.Text, salt)
 							if err != nil {
-								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %s for %s: %w", a.Text, flatrule.Label, err))
+								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %s for %s: %w", rd.Key, flatrule.Label, err))
 								return
 							}
 							althash, err := encode(althashbytes)
 							if err != nil {
-								hashErrors = append(hashErrors, fmt.Errorf("Error encoding %s hash for %s: %w", a.Text, flatrule.Label, err))
+								hashErrors = append(hashErrors, fmt.Errorf("Error encoding %s hash for %s: %w", rd.Key, flatrule.Label, err))
 								return
 							}
 							if !yield(althash) {
