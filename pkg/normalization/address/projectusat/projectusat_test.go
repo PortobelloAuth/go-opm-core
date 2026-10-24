@@ -20,6 +20,18 @@ func TestApply(t *testing.T) {
 			input:  "a24 Calle Marginal, Bayamón, 00956, Puerto Rico",
 			expect: "A24 CALLE MARGINAL\nBAYAMON PR 00956",
 		},
+		{
+			input:  "915 2ND ST N ST CLOUD MN 56301",
+			expect: "915 2ND ST N\nSAINT CLOUD MN 56301",
+		},
+		{
+			input:  "435 S SAINT CLAIR ST TOLEDO OH 43601",
+			expect: "435 S SAINT CLAIR ST\nTOLEDO OH 43601",
+		},
+		{
+			input:  "Post Office Box G1 TOLEDO OH 43601",
+			expect: "PO BOX G1\nTOLEDO OH 43601",
+		},
 	}
 
 	a, err := projectusat.New("address")
