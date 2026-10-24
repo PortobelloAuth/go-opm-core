@@ -59,7 +59,7 @@ type Hash interface {
 }
 
 func New(hashtype string) (Hash, error) {
-	// TODO: make this switch case insensitive
+	// TODO: make this hash lookup case insensitive
 	newCalled = true
 
 	// split hashtype at the first hyphen

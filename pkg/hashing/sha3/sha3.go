@@ -53,7 +53,9 @@ func (h *SHA3) HashFn(source []byte, salt []byte) ([]byte, error) {
 	}
 
 	half := len(salt) / 2
-	input := append(salt[0:half], source...)
+	input := make([]byte, 0, len(salt)+len(source))
+	input = append(input, salt[:half]...)
+	input = append(input, source...)
 	input = append(input, salt[half:]...)
 
 	h.Hash.Reset()
