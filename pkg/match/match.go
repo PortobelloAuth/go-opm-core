@@ -1,6 +1,7 @@
 package match
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -61,8 +62,8 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 						var err error
 						normv, err = rd.Normalizations.Apply(v)
 						if err != nil {
-							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %s for %s: %w", rd.Key, flatrule.Label, err))
-							return
+							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %q for %q: %w", rd.Key, flatrule.Label, err))
+							continue
 						}
 					}
 
@@ -75,13 +76,13 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 						for _, a := range alts {
 							althashbytes, err := hashFn(a.Text, salt)
 							if err != nil {
-								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %s for %s: %w", rd.Key, flatrule.Label, err))
-								return
+								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %q for %q: %w", rd.Key, flatrule.Label, err))
+								continue
 							}
 							althash, err := encode(althashbytes)
 							if err != nil {
-								hashErrors = append(hashErrors, fmt.Errorf("Error encoding %s hash for %s: %w", rd.Key, flatrule.Label, err))
-								return
+								hashErrors = append(hashErrors, fmt.Errorf("Error encoding %q hash for %q: %w", rd.Key, flatrule.Label, err))
+								continue
 							}
 							if !yield(althash) {
 								return
@@ -97,10 +98,6 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 		}
 	})
 
-	if len(hashErrors) > 0 {
-		return nil, hashErrors[0]
-	}
-
 	return &HashedDemographics{
 		HashAlgorithm:    hashFn,
 		Salt:             salt,
@@ -108,7 +105,7 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 		flattenedRuleSet: flatrs,
 		Hashes:           hashes,
 		Encode:           encode,
-	}, nil
+	}, errors.Join(hashErrors...)
 }
 
 // Match takes a raw set of demographics and a hashed set of demographics, which contains a RuleSet, a
@@ -116,18 +113,20 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 // using the RuleSet Normalizations, applies the hashing function, and compares the resulting values
 // to the hashed set to see if any of the RuleSet's Rules match.
 func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
-	calc, err := NewHashedDemographics(
+	calc, hasherr := NewHashedDemographics(
 		raw,
 		comp.HashAlgorithm,
 		comp.Salt,
 		comp.RuleSet,
 		comp.Encode,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("Error calculating matching hashes: %w", err)
+	if calc == nil {
+		return nil, fmt.Errorf("Unable to calculate matching hashes: %w", hasherr)
 	}
 
-	return calc.Match(comp)
+	matched, err := calc.Match(comp)
+
+	return matched, errors.Join(err, hasherr)
 }
 
 func (calc *HashedDemographics) Match(comp *HashedDemographics) (*MatchResult, error) {
