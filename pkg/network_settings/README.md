@@ -13,7 +13,7 @@ networks with these (conceptual) settings:
 
 1. TEFCA-compatible (not privacy preserving):
    - Type: tefca2026
-   - Bridge to XPDQ / Carequality query through QHIN and existing frameworks
+   - Bridge to XCPD / Carequality query through QHIN and existing frameworks
      Demographics and credentials passed unmodified without matching first
    - Third-party verified patient consent required for use
    - Established expiration date
