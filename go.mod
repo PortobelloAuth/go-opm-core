@@ -3,7 +3,7 @@ module github.com/PortobelloAuth/go-opm-core
 go 1.26.0
 
 require (
-	github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.3
+	github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.4
 	github.com/anyascii/go v0.3.3
 	golang.org/x/crypto v0.53.0
 	lukechampine.com/blake3 v1.4.1
