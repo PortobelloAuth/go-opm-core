@@ -1,5 +1,5 @@
-github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.2 h1:loL3GOqaF8vQNMASk0l26OH6xcyqHLfBIPbI3TTd4/g=
-github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.2/go.mod h1:K1G8133gpFIyP462OwLri3XGBlsfEIBmTb4r1J7zDq0=
+github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.3 h1:q0SDtoy+65zHuuvWt7GWOO6EJmYVs/Dl4eY6be7sTvc=
+github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.3/go.mod h1:mC/EtS+g1aAY+QE6zV8xK11chh+Kwr6RRNPW7jvuV1s=
 github.com/anyascii/go v0.3.3 h1:A3BhW92hXPYPb8Y1+zLOip8xjSxNcdl1FaxzTmFxrhs=
 github.com/anyascii/go v0.3.3/go.mod h1:HDvbMmSpqJyIe+xtSkHmAYTjc8PzvO3l1Jmgx/IFUPs=
 github.com/bits-and-blooms/bitset v1.24.2/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
@@ -13,8 +13,8 @@ github.com/klauspost/cpuid/v2 v2.0.9 h1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBF
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/poetic-systems/addresstables v0.1.0-alpha.0 h1:bsPfgfImKRoTXjUO9pzy+p2ENsQiCDne5x2RKactNAc=
 github.com/poetic-systems/addresstables v0.1.0-alpha.0/go.mod h1:0+0MslI2VD30//JsNgvjPLz04GiV6YEsFE2pni512Fs=
-github.com/poetic-systems/zipcity v0.1.0-alpha.2 h1:WF3HccpZmItEG099iefi9GJcYx80ycQMYmWkTHWYov8=
-github.com/poetic-systems/zipcity v0.1.0-alpha.2/go.mod h1:wqkYtdCgWdJftdXLN8nk9EOOdyCo07sQ0068a53Kpdo=
+github.com/poetic-systems/zipcity v0.1.0-alpha.3 h1:D5Vq1x1sOXCBx4p5GIVmNN2cPh7xaSLjqTEwdCoFfB8=
+github.com/poetic-systems/zipcity v0.1.0-alpha.3/go.mod h1:wqkYtdCgWdJftdXLN8nk9EOOdyCo07sQ0068a53Kpdo=
 github.com/twmb/murmur3 v1.1.8 h1:8Yt9taO/WN3l08xErzjeschgZU2QSrwm1kclYq+0aRg=
 github.com/twmb/murmur3 v1.1.8/go.mod h1:Qq/R7NUyOfr65zD+6Q5IHKsJLwP7exErjN6lyyq3OSQ=
 golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
