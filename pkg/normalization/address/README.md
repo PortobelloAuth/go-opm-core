@@ -1,39 +1,41 @@
 # Address Normalization
 
-Address normalization is complicated. The appropriate standard to apply can vary
-significantly based on the locality in which the address exists and the use case
-for which the address is being normalized. Therefore this module provides
-multiple implementation options.
+Address normalization is complicated. Addressing rules vary significantly based
+on the locality in which the address exists and the use case for which the
+address is being normalized. Address normalization currently defaults to our
+`projectusat` package. This employs
+[go-projectusat](https://github.com/PortobelloAuth/go-projectusat), an address
+parsing and normalization library that implements the
+[Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf)
+(which is an extension of the USPS publication 28 standard) directly in Go.
+`go-projectusat` employs TIGER file data from the US Census Bureau encoded as
+bloom filters to enable data dependent normalization for US addresses with a
+relatively small memory footprint and no API calls.
 
 ## Options
 
-- `projectusat` - (not implemented yet) employs
-  [go-projectusat](https://github.com/PortobelloAuth/go-projectusat) which
-  implements the
-  [Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf)
-  (which is an extension of the USPS publication 28 standard) directly in Go
-- `libpostal` (partially implemented) an http API wrapper around
-  [pelias/libpostal-service](https://hub.docker.com/r/pelias/libpostal-service/tags)
-  to normalize international addresses using libpostal, which is derrived from
-  Open Street Map data
+Did we mention that address normalization is complicated? Your use case may
+require significantly different normalization rules than those prescribed by the
+[Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf).
+Therefore this module allows the caller to override the default implementation.
 
-You are required to Register the address normalization implementation that you
-want to use; there is no default at this time.
+To employ a different address normalization implementation you must register it
+with `normalization.Register()` before `normalization.New()` is first called.
 
 ```go
 import (
-  "github.com/PortobelloAuth/go-opm-core/pkg/normalization/address/libpostal"
+  ".../example"
   "github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 )
 
 func init() {
-  lpEndpoint, found := os.LookupEnv("LIBPOSTAL_ENDPOINT")
+  endpoint, found := os.LookupEnv("EXAMPLE_ENDPOINT")
   // normalization.Register() must be called before normalization.New()
   normalization.Register(
     "address",
     func(specifier string) (Normalization, error) {
-      return libpostal.NewService(
-        lpEndpoint,
+      return example.NewService(
+        endpoint,
         300 * time.Millisecond
       )
     },

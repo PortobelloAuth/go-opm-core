@@ -17,7 +17,8 @@ focused concern.
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the Apache License 2.0 - see the
+[LICENSE](LICENSE.md) file for details.
 
 ## Concepts
 
@@ -31,11 +32,57 @@ identifiers and checks to see if any of the resulting hashed identifiers match
 the supplied hashed identifiers. If a single matching rule matches, the result
 will be true.
 
+### Network Settings
+
+An Open Person Matching network is defined by its
+[Network Settings](./pkg/network_settings/). These settings define how
+requestors, responders, and facilitators (aka Nodes) interact to securely match
+and exchange demographic hashes and credentials. Because nodes may participate
+in multiple networks at once, Network Settings enable the gradual adoption, use,
+and deprecation of network settings such as versions, network types, matching
+rules, node/network authentication, encryption, etc. This is a critical
+capability to maintain the security of an open person matching network.
+
+### Rules
+
+[Rules](./pkg/rules/) define the matching criteria used by a network. They are
+part of a network's settings. At a high level, network rules have a root RuleSet
+that contains Rules; these Rules may contain RuleDemographics and other
+RuleSets. This creates a tree-like data structure that allows a complex set of
+rules to be defined relatively simply. RuleDemographics and RuleSets each may
+define Normalizations to be applied to their respective demographic values.
+RuleDemographics may also define DemographicAlternatives functions to enable the
+use of fuzzy matching, nicknames, etc.
+
+### Normalizations
+
+[Normalizations](./pkg/normalization/) transform demographics in defined ways to
+establish a standardized form of the demographic that is suitable for
+comparison. Some Normalizations are relatively simple - they convert to
+uppercase, remove whitespace, etc. Others, like
+[`address`](./pkg/normalization/address/) are quite complicated; by default
+[`address`](./pkg/normalization/address/) uses
+[`projectusat`](./pkg/normalization/address/projectusat/) which implements the
+[Project US@ standard](https://asapnet.org/wp-content/uploads/2022/03/Project_US_FINAL_Technical_Specification_Version_1.0.pdf)
+standard using
+[`go-projectusat`](https://github.com/PortobelloAuth/go-projectusat), a Go
+module that we developed for this purpose.
+
+### Demographic Alternatives
+
+Many demographics can show up in a variety of forms in a person's records:
+diacritics in a person's name or address, nick names, misspellings, historical
+names, etc. In some cases these are represented by distinct entries in a raw
+demographic map. For others a
+[Demographic Alternatives Function](./pkg/demographicalts/) provides a mechanism
+for Rules to define different ways that a particular demographic may be
+considered to match.
+
 ## TODO
 
-- implement a working address parser and normalizer (using go-projectusat)
-- implement a RuleSet corresponding to the current CMS HealthTech Ecosystem
-  patient matching rules
+- implement a RuleSet corresponding to the current
+  [CMS HealthTech Ecosystem
+  patient matching rules](https://patientmatching.org/)
 - implement the hash-routed-challenge network type and define the (probable)
   `Request()`, `Register()`, and `Respond()` APIs
 - implement other meaningful rule sets referenced in TEFCA SoPs and HL7 FHIR
@@ -44,4 +91,3 @@ will be true.
 - add asymmetric encryption type package
 - add symmetric encryption package
 - revisit the `match.Demographics` type; is it useful as it is?
-- finish / fix address normalization

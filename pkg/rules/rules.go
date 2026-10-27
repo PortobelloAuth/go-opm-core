@@ -11,7 +11,7 @@ type RuleDemographic struct {
 	// TODO?: remove Label. It duplicates Key.
 	Label          string
 	Normalizations *normalization.NormalizationSequence
-	// Key is the key by which we look up the demogrpahic, not the value or hash itself
+	// Key is the key by which we look up the demographic, not the value or hash itself
 	Key          string
 	Alternatives demographicalts.DemographicAlternativesFn
 	Limit        int
