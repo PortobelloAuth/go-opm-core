@@ -8,6 +8,7 @@ import (
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
 
@@ -69,8 +70,16 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 				if ok {
 					normv := v
 					if rd.Normalizations != nil {
+						var norm = normalization.Normalization(rd.Normalizations)
+						with, ok := norm.(normalization.ContextualNormalization)
+						if ok {
+							norm = with.WithContext(func(s string) (string, bool) {
+								v, ok := raw.Raw[s]
+								return v, ok
+							})
+						}
 						var err error
-						normv, err = rd.Normalizations.Apply(v)
+						normv, err = norm.Apply(v)
 						if err != nil {
 							hashErrors = append(hashErrors, fmt.Errorf("Error normalizing %q for %q: %w", rd.Key, flatrule.Label, err))
 							continue

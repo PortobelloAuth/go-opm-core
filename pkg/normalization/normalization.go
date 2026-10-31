@@ -17,6 +17,20 @@ type Normalization interface {
 	Apply(input string) (string, error)
 }
 
+type ContextFunc func(string) (string, bool)
+
+type ContextualNormalization interface {
+	WithContext(ContextFunc) Normalization
+}
+
+type Applicable struct {
+	Fn func(input string) (string, error)
+}
+
+func (a *Applicable) Apply(input string) (string, error) {
+	return a.Fn(input)
+}
+
 type NormalizationConstructor func(specifier string) (Normalization, error)
 
 var normalizationRegistery map[string]NormalizationConstructor
@@ -113,6 +127,7 @@ func New(specifier string) (Normalization, error) {
 
 type NormalizationSequence struct {
 	Seq []Normalization
+	ctx ContextFunc
 }
 
 func NewSequence(order []string) (*NormalizationSequence, error) {
@@ -146,6 +161,12 @@ func (seq *NormalizationSequence) Apply(input string) (string, error) {
 				// when building the sequence
 				continue
 			}
+			if seq.ctx != nil {
+				with, ok := norm.(ContextualNormalization)
+				if ok {
+					norm = with.WithContext(seq.ctx)
+				}
+			}
 			result, err = norm.Apply(result)
 			if err != nil {
 				return "", err
@@ -153,4 +174,12 @@ func (seq *NormalizationSequence) Apply(input string) (string, error) {
 		}
 	}
 	return result, nil
+}
+
+func (seq *NormalizationSequence) WithContext(cfn ContextFunc) Normalization {
+	with := &NormalizationSequence{
+		Seq: seq.Seq,
+		ctx: cfn,
+	}
+	return &Applicable{Fn: with.Apply}
 }
