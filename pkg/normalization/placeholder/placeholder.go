@@ -3,9 +3,19 @@ package placeholder
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
+	"golang.org/x/text/runes"
 )
+
+var notAsciiDigit = runes.Predicate(func(r rune) bool {
+	return r < '0' || r > '9'
+})
+
+var notAsciiAlphaNum = runes.Predicate(func(r rune) bool {
+	return !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'))
+})
 
 // PlaceholderCheck is an interface that defines a placeholder check so
 // that each list can be made of different types of check that each
@@ -63,6 +73,9 @@ func (s *SuffixStringCheck) Matches(input string) bool {
 type RepeatingCharacterCheck struct{}
 
 func (r *RepeatingCharacterCheck) Matches(input string) bool {
+	if utf8.RuneCountInString(input) < 2 {
+		return false
+	}
 	var first rune
 	for i, next := range input {
 		if i == 0 {
@@ -79,13 +92,56 @@ func (r *RepeatingCharacterCheck) Matches(input string) bool {
 // DigitsCheck checks to see if the input string is entirely made of digits
 type DigitsCheck struct{}
 
-func (r *DigitsCheck) Matches(input string) bool {
-	for _, next := range strings.Split(input, "") {
-		if !strings.ContainsAny(next, "0123456789") {
+func (d *DigitsCheck) Matches(input string) bool {
+	if len(input) == 0 {
+		return false
+	}
+	for _, r := range input {
+		if notAsciiDigit.Contains(r) {
 			return false
 		}
 	}
 	return true
+}
+
+// TransformCheck checks to see if the input string matches after it is transformed
+type TransformCheck struct {
+	Fn    func(string) (string, error)
+	Check PlaceholderCheck
+	ctx   normalization.ContextFunc
+}
+
+func (t *TransformCheck) Matches(input string) bool {
+	transformed := input
+	check := t.Check
+	if check == nil {
+		return false
+	}
+	var err error
+	if t.Fn != nil {
+		transformed, err = t.Fn(input)
+		if err != nil {
+			return false
+		}
+	}
+	if t.ctx != nil {
+		with, ok := check.(ContextualPlaceholderCheck)
+		if ok {
+			check = with.WithContext(t.ctx)
+		}
+	}
+	return check.Matches(transformed)
+}
+
+func (t *TransformCheck) WithContext(cfn normalization.ContextFunc) PlaceholderCheck {
+	with := &TransformCheck{
+		Fn:    t.Fn,
+		Check: t.Check,
+		ctx:   cfn,
+	}
+	return &FnCheck{
+		Fn: with.Matches,
+	}
 }
 
 // LengthCheck checks to see if the input string is exactly Len characters
@@ -94,7 +150,8 @@ type LengthCheck struct {
 }
 
 func (l *LengthCheck) Matches(input string) bool {
-	return len(input) == l.Len
+	// make sure to check the character count, not the byte count
+	return utf8.RuneCountInString(input) == l.Len
 }
 
 // AndCheck checks to see if the input string matches all of multiple checks
@@ -208,10 +265,11 @@ type WithContextCheck struct {
 }
 
 func (w *WithContextCheck) Matches(input string) bool {
-	if w.ctx == nil {
-		w.ctx = func(string) (string, bool) { return "", false }
+	ctx := w.ctx
+	if ctx == nil {
+		ctx = func(string) (string, bool) { return "", false }
 	}
-	return w.fn(w.ctx)
+	return w.fn(ctx)
 }
 
 func (w *WithContextCheck) WithContext(cfn normalization.ContextFunc) PlaceholderCheck {
@@ -271,7 +329,9 @@ var names = []PlaceholderCheck{
 			},
 		},
 	},
-	// single-character or repeated-character strings ("X" "ZZZ")
+	// single-character are explicitly noted as placeholders to be removed by v3.4.1
+	&LengthCheck{Len: 1},
+	// repeated-character strings ("X" "ZZZ")
 	&RepeatingCharacterCheck{},
 }
 
@@ -295,21 +355,68 @@ var last4 = []PlaceholderCheck{
 }
 
 var phonenumber = []PlaceholderCheck{
-	&StringCheck{"000-000-0000"},
-	&StringCheck{"111-111-1111"},
-	&StringCheck{"555-555-5555"},
-	&StringCheck{"123-456-7890"},
-	// any number with a 555 exchange
-	&PrefixStringCheck{"555"},
+	&TransformCheck{
+		Fn: func(s string) (string, error) {
+			// remove non-digits
+			var b strings.Builder
+			b.Grow(len(s))
+			for _, r := range s {
+				if !notAsciiDigit.Contains(r) {
+					b.WriteRune(r)
+				}
+			}
+			return b.String(), nil
+		},
+		Check: &OrCheck{
+			Checks: []PlaceholderCheck{
+				// All the same digit
+				&RepeatingCharacterCheck{},
+				// 123-456-7890
+				&StringCheck{"1234567890"},
+				// any number with a 555 area code - it does not exist
+				// &PrefixStringCheck{"555"},
+				// any number with a 555 exchange
+				&TransformCheck{
+					Fn: func(s string) (string, error) {
+						if len(s) == 7 {
+							return s[0:3], nil
+						}
+						if len(s) == 10 {
+							return s[3:6], nil
+						}
+						if len(s) == 11 && s[0] == '1' {
+							return s[4:7], nil
+						}
+
+						return "", nil
+					},
+					Check: &StringCheck{"555"},
+				},
+			},
+		},
+	},
 }
 
 var email = []PlaceholderCheck{
 	&StringCheck{"test@test.com"},
-	// TODO: this needs to remove non-alphanumeric characters first.
-	&PrefixStringCheck{"noreply@"}, // include variations with punctuation in the identifier portion of the address
 	&StringCheck{"unknown@unknown.com"},
 	&StringCheck{"none@none.com"},
 	&SuffixStringCheck{"@example.com"},
+	// The noreply check removes common non-alphanumeric characters first,
+	// matching variations with punctuation in the identifier portion of the address
+	&TransformCheck{
+		Fn: func(s string) (string, error) {
+			var b strings.Builder
+			b.Grow(len(s))
+			for _, r := range s {
+				if r == '@' || !notAsciiAlphaNum.Contains(r) {
+					b.WriteRune(r)
+				}
+			}
+			return b.String(), nil
+		},
+		Check: &PrefixStringCheck{"noreply@"},
+	},
 }
 
 var address = []PlaceholderCheck{
@@ -341,8 +448,11 @@ type Placeholder struct {
 
 func New(specifier string) (*Placeholder, error) {
 	parts := strings.SplitN(specifier, "-", 2)
-	if parts[0] != "placeholder" {
+	if len(parts) < 1 || parts[0] != "placeholder" {
 		return nil, fmt.Errorf("invalid specifier: %s", specifier)
+	}
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("incomplete specifier: %s", specifier)
 	}
 
 	p := &Placeholder{}

@@ -15,6 +15,7 @@ func TestBadSpecifierPlaceholder(t *testing.T) {
 		{"Incorrect specifier", "specifier"},
 		{"Unknown list", "placeholder-not a real list"},
 		{"Incorrect list seporator", "placeholder/names"},
+		{"Incomplete specifier", "placeholder"},
 	}
 
 	for _, tc := range cases {
@@ -51,6 +52,11 @@ func TestNamesPlaceholder(t *testing.T) {
 		{"Jane with other last name", "JANE", "JANE", map[string]string{"family": "Jones"}},
 		{"Other first name with last name Doe", "Mary", "Mary", map[string]string{"family": "Doe"}},
 		{"A first name", "Hector", "Hector", map[string]string{}},
+		{"A single character", "A", "", map[string]string{}},
+		{"A single character - X", "X", "", map[string]string{}},
+		{"A repeating character", "DD", "", map[string]string{}},
+		{"A repeating character - ZZZ", "ZZZ", "", map[string]string{}},
+		{"A long repeating character", "ZZZZZ", "", map[string]string{}},
 	}
 
 	p, err := placeholder.New("placeholder-names")
@@ -164,19 +170,21 @@ func TestPhonePlaceholder(t *testing.T) {
 		Ctx   map[string]string
 	}{
 		{"formatted zeros", "000-000-0000", "", map[string]string{}},
-		// {"unformatted zeros", "0000000000", "", map[string]string{}},
-		// {"parentheses formatted zeros", "(000)000-0000", "", map[string]string{}},
-		// {"dot-formatted zeros", "000.000.0000", "", map[string]string{}},
+		{"unformatted zeros", "0000000000", "", map[string]string{}},
+		{"parentheses formatted zeros", "(000)000-0000", "", map[string]string{}},
+		{"dot-formatted zeros", "000.000.0000", "", map[string]string{}},
 		{"ones", "111-111-1111", "", map[string]string{}},
 		{"fives", "555-555-5555", "", map[string]string{}},
 		{"1234", "123-456-7890", "", map[string]string{}},
-		{"555 exchange", "555-218-2342", "", map[string]string{}},
-		// {"short", "218-2342", "", map[string]string{}},
-		// {"long", "123-887-218-2342", "", map[string]string{}},
+		{"555 exchange", "480-555-2342", "", map[string]string{}},
+		// NOTE: the 555 area code doesn't exist, but the standard is silent about it
+		// {"555 area code", "555-218-2342", "", map[string]string{}},
 		// NOTE: The placeholder standard is silent on short numbers, long numbers,
 		// extensions, and international numbers. e164 digits...?
-		// {"US 10-digit", "480-218-2342", "480-218-2342", map[string]string{}},
-		// {"US 11-digit", "1-480-218-2342", "1-480-218-2342", map[string]string{}},
+		// {"short", "218-2342", "", map[string]string{}},
+		// {"long", "123-887-218-2342", "", map[string]string{}},
+		{"US 10-digit", "480-218-2342", "480-218-2342", map[string]string{}},
+		{"US 11-digit", "1-480-218-2342", "1-480-218-2342", map[string]string{}},
 	}
 
 	p, err := placeholder.New("placeholder-phonenumber")
@@ -211,9 +219,9 @@ func TestEMailPlaceholder(t *testing.T) {
 		{"unknown at unknown.com", "unknown@unknown.com", "", map[string]string{}},
 		{"none at none.com", "none@none.com", "", map[string]string{}},
 		{"noreply", "noreply@portobello.health", "", map[string]string{}},
-		// {"hyphenated noreply", "no-reply@portobello.health", "", map[string]string{}},
-		// {"dotted noreply", "no.reply@portobello.health", "", map[string]string{}},
-		// {"underscored noreply", "no_reply@portobello.health", "", map[string]string{}},
+		{"hyphenated noreply", "no-reply@portobello.health", "", map[string]string{}},
+		{"dotted noreply", "no.reply@portobello.health", "", map[string]string{}},
+		{"underscored noreply", "no_reply@portobello.health", "", map[string]string{}},
 		{"example.com", "fake@example.com", "", map[string]string{}},
 		{"example.com", "abe@example.com", "", map[string]string{}},
 	}
