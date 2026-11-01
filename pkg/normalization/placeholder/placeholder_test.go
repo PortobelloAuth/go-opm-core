@@ -20,7 +20,7 @@ func TestBadSpecifierPlaceholder(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.Label, func(t *testing.T) {
-			_, err := placeholder.New(tc.Spec)
+			_, err := placeholder.NewSpecified(tc.Spec)
 			if err == nil {
 				t.Errorf("Expected error instantiating %q placeholder normalizer", tc.Spec)
 			}
@@ -59,7 +59,7 @@ func TestNamesPlaceholder(t *testing.T) {
 		{"A long repeating character", "ZZZZZ", "", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-names")
+	p, err := placeholder.NewSpecified("placeholder-names")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'names' placeholder normalizer")
 	}
@@ -96,7 +96,7 @@ func TestDateOfBirthPlaceholder(t *testing.T) {
 		{"1 Feb 1987", "01/02/1987", "01/02/1987", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-dateofbirth")
+	p, err := placeholder.NewSpecified("placeholder-dateofbirth")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'dateofbirth' placeholder normalizer")
 	}
@@ -141,7 +141,7 @@ func TestLast4Placeholder(t *testing.T) {
 		{"long", "59872", "", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-last4")
+	p, err := placeholder.NewSpecified("placeholder-last4")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'last4' placeholder normalizer")
 	}
@@ -187,7 +187,7 @@ func TestPhonePlaceholder(t *testing.T) {
 		{"US 11-digit", "1-480-218-2342", "1-480-218-2342", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-phonenumber")
+	p, err := placeholder.NewSpecified("placeholder-phonenumber")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'phonenumber' placeholder normalizer")
 	}
@@ -226,7 +226,7 @@ func TestEMailPlaceholder(t *testing.T) {
 		{"example.com", "abe@example.com", "", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-email")
+	p, err := placeholder.NewSpecified("placeholder-email")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'email' placeholder normalizer")
 	}
@@ -263,7 +263,7 @@ func TestAddressPlaceholder(t *testing.T) {
 		{"No Fixed Address", "No Fixed Address", "", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-address")
+	p, err := placeholder.NewSpecified("placeholder-address")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'address' placeholder normalizer")
 	}
@@ -301,7 +301,7 @@ func TestSubscriberIDPlaceholder(t *testing.T) {
 		{"nines", "999999999999999", "", map[string]string{}},
 	}
 
-	p, err := placeholder.New("placeholder-subscriberid")
+	p, err := placeholder.NewSpecified("placeholder-subscriberid")
 	if err != nil {
 		t.Fatalf("Unable to instantiate 'subscriberid' placeholder normalizer")
 	}

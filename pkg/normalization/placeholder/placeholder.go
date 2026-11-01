@@ -441,12 +441,27 @@ var subscriberid = []PlaceholderCheck{
 }
 
 type Placeholder struct {
-	List string
-	list []PlaceholderCheck
-	ctx  normalization.ContextFunc
+	ListLabel string
+	List      []PlaceholderCheck
+	ctx       normalization.ContextFunc
 }
 
-func New(specifier string) (*Placeholder, error) {
+func New(label string, list []PlaceholderCheck) (*Placeholder, error) {
+	return &Placeholder{
+		ListLabel: label,
+		List:      list,
+	}, nil
+}
+
+// NewSpecified allows creating a new Placeholder using a specifier, like
+// we do with Normalizations. However, this requires a registration API
+// like Normalizations have to allow specifier names to be added or
+// overridden. Since differing RuleSets may require different lists a
+// specifier based API requires coordination (likely in the form of
+// namespaces) between RuleSets to prevent breaking each other. New
+// provides a simpler mechanism where RuleSets simply provide their own
+// list. _This AP is deprecated._
+func NewSpecified(specifier string) (*Placeholder, error) {
 	parts := strings.SplitN(specifier, "-", 2)
 	if len(parts) < 1 || parts[0] != "placeholder" {
 		return nil, fmt.Errorf("invalid specifier: %s", specifier)
@@ -455,40 +470,31 @@ func New(specifier string) (*Placeholder, error) {
 		return nil, fmt.Errorf("incomplete specifier: %s", specifier)
 	}
 
-	p := &Placeholder{}
 	switch parts[1] {
 	case "names":
-		p.list = names
-		p.List = parts[1]
+		return New(parts[1], names)
 	case "dateofbirth":
-		p.list = dateofbirth
-		p.List = parts[1]
+		return New(parts[1], dateofbirth)
 	case "last4":
-		p.list = last4
-		p.List = parts[1]
+		return New(parts[1], last4)
 	case "phonenumber":
-		p.list = phonenumber
-		p.List = parts[1]
+		return New(parts[1], phonenumber)
 	case "email":
-		p.list = email
-		p.List = parts[1]
+		return New(parts[1], email)
 	case "address":
-		p.list = address
-		p.List = parts[1]
+		return New(parts[1], address)
 	case "subscriberid":
-		p.list = subscriberid
-		p.List = parts[1]
+		return New(parts[1], subscriberid)
 	default:
 		// TODO: create logic for building the list from JSON taken from
 		// NetworkSettings / RuleSet JSON so that placeholder handling
 		// isn't entirely hardcoded.
 		return nil, fmt.Errorf("invalid placeholder specifier: %s", specifier)
 	}
-	return p, nil
 }
 
 func (p *Placeholder) Apply(input string) (string, error) {
-	for _, check := range p.list {
+	for _, check := range p.List {
 		if p.ctx != nil {
 			with, ok := check.(ContextualPlaceholderCheck)
 			if ok {
@@ -504,9 +510,9 @@ func (p *Placeholder) Apply(input string) (string, error) {
 
 func (p *Placeholder) WithContext(cfn normalization.ContextFunc) normalization.Normalization {
 	with := &Placeholder{
-		List: p.List,
-		list: p.list,
-		ctx:  cfn,
+		ListLabel: p.ListLabel,
+		List:      p.List,
+		ctx:       cfn,
 	}
 	return &normalization.Applicable{Fn: with.Apply}
 }

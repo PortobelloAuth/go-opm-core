@@ -67,7 +67,7 @@ func (rs *RuleSet) Flatten() (FlattenedRuleSet, error) {
 		hyphen := ""
 		for _, rd := range r.Components {
 			if len(r.Label) < 1 {
-				label = fmt.Sprintf("%s%s", hyphen, rd.Key)
+				label = fmt.Sprintf("%s%s%s", label, hyphen, rd.Key)
 			}
 
 			mergedseq := make([]normalization.Normalization, 0)

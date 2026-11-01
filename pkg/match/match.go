@@ -93,6 +93,15 @@ func NewHashedDemographics(raw *Demographics, hashFn hashing.HashFunc, salt []by
 					alts := altFn(normv, rd.Key, rd.Limit)
 					althashes := slices.Collect(func(yield func(string) bool) {
 						for _, a := range alts {
+							if a.Text == "" {
+								// empty normalized values MUST NOT be compared. DO NOT hash them.
+								// demographicalts as implemented here depend on the normalized value.
+								// TODO: Other alternative values (like nicknames and historical names)
+								// may require their own implementation or an adjustment to this logic.
+								// This check is implemented here instead of before the altFn is called
+								// to leave room for possible implementations.
+								continue
+							}
 							althashbytes, err := hashFn(a.Text, salt)
 							if err != nil {
 								hashErrors = append(hashErrors, fmt.Errorf("Error hashing %q for %q: %w", rd.Key, flatrule.Label, err))
