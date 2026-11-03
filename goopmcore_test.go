@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	goopmcore "github.com/PortobelloAuth/go-opm-core"
+	"github.com/PortobelloAuth/go-opm-core/internal/test/placeholdertestfixture"
 	"github.com/PortobelloAuth/go-opm-core/pkg/match"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
-	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/placeholder/placeholdertestfixture"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
 

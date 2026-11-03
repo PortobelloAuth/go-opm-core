@@ -3,7 +3,7 @@ package placeholder_test
 import (
 	"testing"
 
-	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/placeholder/placeholdertestfixture"
+	"github.com/PortobelloAuth/go-opm-core/internal/test/placeholdertestfixture"
 )
 
 func TestBadSpecifierPlaceholder(t *testing.T) {
