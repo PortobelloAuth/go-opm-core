@@ -8,23 +8,31 @@ import (
 type DateOfBirth struct{}
 
 var supportedDateLayouts = map[string][]string{
-	"2006/01/02": []string{
+	"2006/01/02": {
 		"2006/01/02",
 		"20060102",
 		"2006-01-02",
 		"2006.01.02",
+		"2006/1/2",
+		"2006-1-2",
+		"2006.1.2",
 		"2 Jan 2006",
 		"2Jan2006",
 		"2 January 2006",
 		"2January2006",
 		"Jan 2, 2006",
 		"January 2, 2006",
+		// Explicitly prefer US Formatted MM/DD/YYYY
 		"01/02/2006",
 		"01-02-2006",
+		"1/2/2006",
+		"1-2-2006",
 		"02/01/2006",
 		"02-01-2006",
+		"2/1/2006",
+		"2-1-2006",
 	},
-	"2006/01": []string{
+	"2006/01": {
 		"2006/01",
 		"200601",
 		"2006-01",
@@ -32,7 +40,7 @@ var supportedDateLayouts = map[string][]string{
 		"Jan 2006",
 		"January 2006",
 	},
-	"2006": []string{"2006"},
+	"2006": {"2006"},
 }
 
 func New(specifier string) (*DateOfBirth, error) {
@@ -48,8 +56,16 @@ func (l *DateOfBirth) Apply(input string) (string, error) {
 		for _, layout := range layouts {
 			t, err := time.Parse(layout, input)
 			if err == nil {
-				// TODO: make sure the date is within the expected range
-				result = t.Format(format)
+				// make sure the date is within the expected range
+				// TODO: consider moving this specifically to something
+				// like placeholder.DateRangeCheck
+				y, m, d := time.Now().Date()
+				first := time.Date(y-120, m, d, 0, 0, 0, 0, time.UTC)
+				last := time.Date(y, m, d+2, 0, 0, 0, 0, time.UTC)
+				if t.After(first) && t.Before(last) {
+					result = t.Format(format)
+				}
+				break
 			}
 		}
 	}
