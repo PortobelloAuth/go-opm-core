@@ -1,7 +1,6 @@
 package placeholder
 
 import (
-	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -11,10 +10,6 @@ import (
 
 var notAsciiDigit = runes.Predicate(func(r rune) bool {
 	return r < '0' || r > '9'
-})
-
-var notAsciiAlphaNum = runes.Predicate(func(r rune) bool {
-	return !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'))
 })
 
 // PlaceholderCheck is an interface that defines a placeholder check so
@@ -260,7 +255,7 @@ func (fn *FnCheck) Matches(input string) bool {
 
 // WithContextCheck checks to see if some other aspect of the demographics context matches
 type WithContextCheck struct {
-	fn  func(normalization.ContextFunc) bool
+	Fn  func(normalization.ContextFunc) bool
 	ctx normalization.ContextFunc
 }
 
@@ -269,175 +264,17 @@ func (w *WithContextCheck) Matches(input string) bool {
 	if ctx == nil {
 		ctx = func(string) (string, bool) { return "", false }
 	}
-	return w.fn(ctx)
+	return w.Fn(ctx)
 }
 
 func (w *WithContextCheck) WithContext(cfn normalization.ContextFunc) PlaceholderCheck {
 	with := &WithContextCheck{
-		fn:  w.fn,
+		Fn:  w.Fn,
 		ctx: cfn,
 	}
 	return &FnCheck{
 		Fn: with.Matches,
 	}
-}
-
-var names = []PlaceholderCheck{
-	&StringCheck{"Unknown"},
-	&StringCheck{"Unk"},
-	&StringCheck{"Test"},
-	&StringCheck{"Test Patient"},
-	&AndCheck{
-		Checks: []PlaceholderCheck{
-			&WithContextCheck{
-				fn: func(cfn normalization.ContextFunc) bool {
-					v, ok := cfn("family")
-					return ok && len(v) > 0
-				},
-			},
-			&OrCheck{
-				Checks: []PlaceholderCheck{
-					&PrefixStringCheck{"Baby Boy"},
-					&PrefixStringCheck{"Baby Girl"},
-				},
-			},
-		},
-	},
-	// &PrefixStringCheck{"Baby Boy"},  // paired with Surname
-	// &PrefixStringCheck{"Baby Girl"}, // paired with Surname
-	&StringCheck{"Twin A"},
-	&StringCheck{"Twin B"},
-	&StringCheck{"Newborn"},
-	&StringCheck{"N/A"},
-	&StringCheck{"None"},
-	&StringCheck{"TBD"},
-	&AndCheck{
-		Checks: []PlaceholderCheck{
-			&WithContextCheck{
-				fn: func(cfn normalization.ContextFunc) bool {
-					v, ok := cfn("family")
-					v = strings.ToUpper(v)
-					return ok && v == "DOE"
-				},
-			},
-			// paired with generic "John"/"Jane"
-			&OrCheck{
-				Checks: []PlaceholderCheck{
-					&StringCheck{"John"},
-					&StringCheck{"Jane"},
-				},
-			},
-		},
-	},
-	// single-character are explicitly noted as placeholders to be removed by v3.4.1
-	&LengthCheck{Len: 1},
-	// repeated-character strings ("X" "ZZZ")
-	&RepeatingCharacterCheck{},
-}
-
-var dateofbirth = []PlaceholderCheck{
-	// NOTE: using string checks here until the rules determine the need for
-	// handling various different date formats
-	&StringCheck{"01/01/1900"},
-	&StringCheck{"01/01/1901"},
-	&StringCheck{"01/01/1800"},
-	&StringCheck{"01/01/2000"},
-	&StringCheck{"11/11/1111"},
-	&StringCheck{"01/01/0001"},
-	// a DOB equal to the record's registration/admission date (common default-fill error)
-}
-
-var last4 = []PlaceholderCheck{
-	&NotCheck{Check: &LengthCheck{Len: 4}},
-	&StringCheck{"1234"},
-	&NotCheck{Check: &DigitsCheck{}},
-	&RepeatingCharacterCheck{},
-}
-
-var phonenumber = []PlaceholderCheck{
-	&TransformCheck{
-		Fn: func(s string) (string, error) {
-			// remove non-digits
-			var b strings.Builder
-			b.Grow(len(s))
-			for _, r := range s {
-				if !notAsciiDigit.Contains(r) {
-					b.WriteRune(r)
-				}
-			}
-			return b.String(), nil
-		},
-		Check: &OrCheck{
-			Checks: []PlaceholderCheck{
-				// All the same digit
-				&RepeatingCharacterCheck{},
-				// 123-456-7890
-				&StringCheck{"1234567890"},
-				// any number with a 555 area code - it does not exist
-				// &PrefixStringCheck{"555"},
-				// any number with a 555 exchange
-				&TransformCheck{
-					Fn: func(s string) (string, error) {
-						if len(s) == 7 {
-							return s[0:3], nil
-						}
-						if len(s) == 10 {
-							return s[3:6], nil
-						}
-						if len(s) == 11 && s[0] == '1' {
-							return s[4:7], nil
-						}
-
-						return "", nil
-					},
-					Check: &StringCheck{"555"},
-				},
-			},
-		},
-	},
-}
-
-var email = []PlaceholderCheck{
-	&StringCheck{"test@test.com"},
-	&StringCheck{"unknown@unknown.com"},
-	&StringCheck{"none@none.com"},
-	&SuffixStringCheck{"@example.com"},
-	// The noreply check removes common non-alphanumeric characters first,
-	// matching variations with punctuation in the identifier portion of the address
-	&TransformCheck{
-		Fn: func(s string) (string, error) {
-			var b strings.Builder
-			b.Grow(len(s))
-			for _, r := range s {
-				if r == '@' || !notAsciiAlphaNum.Contains(r) {
-					b.WriteRune(r)
-				}
-			}
-			return b.String(), nil
-		},
-		Check: &PrefixStringCheck{"noreply@"},
-	},
-}
-
-var address = []PlaceholderCheck{
-	&StringCheck{"123 Main St"}, // (unaccompanied by a real unit/city match),
-	&StringCheck{"PO Box 0"},
-	&StringCheck{"Unknown"},
-	&StringCheck{"Homeless"},
-	&StringCheck{"No Fixed Address"},
-	// ZIP 00000 or 99999
-	// TODO: use normalization/address/projectusat to parse the address and
-	// check the zip (consider if this is too inefficient)
-}
-
-var subscriberid = []PlaceholderCheck{
-	&StringCheck{"PENDING"},
-	&StringCheck{"TBD"},
-	&StringCheck{"NONE"},
-	// All-zero or all-nine strings
-	// FIXME?: this implementation is a little more broad than the rule text
-	&RepeatingCharacterCheck{},
-	// a payer's documented default/test enrollment value
 }
 
 type Placeholder struct {
@@ -446,50 +283,12 @@ type Placeholder struct {
 	ctx       normalization.ContextFunc
 }
 
-func New(label string, list []PlaceholderCheck) (*Placeholder, error) {
+// New allows the caller to create their own Placeholder normalization using a
+// supplied label and list. Labels should be unique, primarily to aid in debugging.
+func New(label string, list []PlaceholderCheck) *Placeholder {
 	return &Placeholder{
 		ListLabel: label,
 		List:      list,
-	}, nil
-}
-
-// NewSpecified allows creating a new Placeholder using a specifier, like
-// we do with Normalizations. However, this requires a registration API
-// like Normalizations have to allow specifier names to be added or
-// overridden. Since differing RuleSets may require different lists a
-// specifier based API requires coordination (likely in the form of
-// namespaces) between RuleSets to prevent breaking each other. New
-// provides a simpler mechanism where RuleSets simply provide their own
-// list. _This AP is deprecated._
-func NewSpecified(specifier string) (*Placeholder, error) {
-	parts := strings.SplitN(specifier, "-", 2)
-	if len(parts) < 1 || parts[0] != "placeholder" {
-		return nil, fmt.Errorf("invalid specifier: %s", specifier)
-	}
-	if len(parts) < 2 {
-		return nil, fmt.Errorf("incomplete specifier: %s", specifier)
-	}
-
-	switch parts[1] {
-	case "names":
-		return New(parts[1], names)
-	case "dateofbirth":
-		return New(parts[1], dateofbirth)
-	case "last4":
-		return New(parts[1], last4)
-	case "phonenumber":
-		return New(parts[1], phonenumber)
-	case "email":
-		return New(parts[1], email)
-	case "address":
-		return New(parts[1], address)
-	case "subscriberid":
-		return New(parts[1], subscriberid)
-	default:
-		// TODO: create logic for building the list from JSON taken from
-		// NetworkSettings / RuleSet JSON so that placeholder handling
-		// isn't entirely hardcoded.
-		return nil, fmt.Errorf("invalid placeholder specifier: %s", specifier)
 	}
 }
 

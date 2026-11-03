@@ -7,7 +7,7 @@ import (
 	goopmcore "github.com/PortobelloAuth/go-opm-core"
 	"github.com/PortobelloAuth/go-opm-core/pkg/match"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
-	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/placeholder"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/placeholder/placeholdertestfixture"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
 
@@ -83,15 +83,15 @@ func TestPlaintextMatchWithPlaceholders(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error preparing lowercase normalizer: %v", err)
 	}
-	names, err := placeholder.NewSpecified("placeholder-names")
+	names, err := placeholdertestfixture.NewSpecified("placeholder-names")
 	if err != nil {
 		t.Fatalf("Error preparing names placeholder removal: %v", err)
 	}
-	dateofbirth, err := placeholder.NewSpecified("placeholder-dateofbirth")
+	dateofbirth, err := placeholdertestfixture.NewSpecified("placeholder-dateofbirth")
 	if err != nil {
 		t.Fatalf("Error preparing dateofbirth placeholder removal: %v", err)
 	}
-	email, err := placeholder.NewSpecified("placeholder-email")
+	email, err := placeholdertestfixture.NewSpecified("placeholder-email")
 	if err != nil {
 		t.Fatalf("Error preparing email placeholder removal: %v", err)
 	}
