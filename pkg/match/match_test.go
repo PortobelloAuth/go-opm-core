@@ -8,6 +8,7 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 	_ "github.com/PortobelloAuth/go-opm-core/pkg/demographicalts/diacriticalts"
 	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
+	"github.com/PortobelloAuth/go-opm-core/pkg/hashing/noop"
 	"github.com/PortobelloAuth/go-opm-core/pkg/match"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
@@ -279,6 +280,131 @@ func TestMatchWithErrors(t *testing.T) {
 					t.Fatalf("Expected match details for %s to be true: %v", hkey, result)
 				}
 			}
+		}
+	}
+}
+
+// EmptyNormalizer is a normalization function turns any value under an .
+type EmptyNormalizer struct{}
+
+func NewEmptyNormalizer() (*EmptyNormalizer, error) {
+	return &EmptyNormalizer{}, nil
+}
+
+func (l *EmptyNormalizer) Apply(input string) (string, error) {
+	return "", nil
+}
+
+func TestMatchWithBlanks(t *testing.T) {
+	var testcases = []struct {
+		RawA map[string]string
+		RawB map[string]string
+	}{
+		{
+			RawA: map[string]string{
+				"given":  "Maria",
+				"family": "García",
+				"empty":  "",
+			},
+			RawB: map[string]string{
+				"given":  "maria",
+				"family": "garcía",
+			},
+		},
+		{
+			RawA: map[string]string{
+				"given":  "José",
+				"family": "López",
+				"empty":  "normalization",
+			},
+			RawB: map[string]string{
+				"given":  "josé",
+				"family": "lópez",
+			},
+		},
+		{
+			RawA: map[string]string{
+				"given":  "Myra",
+				"family": "Jones",
+				"empty":  "",
+			},
+			RawB: map[string]string{
+				"given":  "myra",
+				"family": "jones",
+			},
+		},
+		{
+			RawA: map[string]string{
+				"given":  "Myra",
+				"family": "Jones",
+				"empty":  "",
+			},
+			RawB: map[string]string{
+				"given":  "adam",
+				"family": "smith",
+			},
+		},
+		{
+			RawA: map[string]string{
+				"empty": "",
+			},
+			RawB: map[string]string{},
+		},
+	}
+
+	noopHash, err := noop.New()
+	if err != nil {
+		t.Fatalf("Unable to instatiate noop (non-)hashing algorithm: %s", err)
+	}
+
+	noopSalt := []byte{} // empty salt doesn't matter for Noop
+
+	emptynorm, err := NewEmptyNormalizer()
+	if err != nil {
+		t.Fatalf("Failed to initialize test emptying normalization")
+	}
+
+	testRules := &rules.RuleSet{
+		Normalizations: &normalization.NormalizationSequence{Seq: []normalization.Normalization{emptynorm}},
+		Rules: []rules.Rule{
+			{Label: "fullname", Components: []rules.RuleDemographic{
+				{Label: "given", Key: "given"},
+				{Label: "family", Key: "family"},
+			}},
+			{Label: "other", Components: []rules.RuleDemographic{
+				{Label: "empty", Key: "empty"},
+				{Label: "notreal", Key: "notreal"},
+			}},
+		},
+	}
+
+	for _, tc := range testcases {
+		rawADemographics := &match.Demographics{
+			Raw: tc.RawA,
+		}
+
+		hashed, e1, e2 := match.NewHashedDemographics(rawADemographics, noopHash.HashFunc, noopSalt, testRules, match.HashToString)
+		if e1 != nil {
+			t.Errorf("Unexpected hash error from NewHashedDemographics() %q", e1)
+		}
+
+		if e2 != nil {
+			t.Fatalf("Unexpected fatal error from NewHashedDemographics() %q", e2)
+		}
+
+		result, err := match.Match(
+			&match.Demographics{
+				Raw: tc.RawB,
+			},
+			hashed,
+		)
+		if err != nil {
+			t.Fatalf("Unexpected returned error from Match() %q", err)
+		}
+
+		// when all values normalize to an empty string it should not be possible to match
+		if result.Matched {
+			t.Fatalf("Expected match status to be false: %v", result)
 		}
 	}
 }
