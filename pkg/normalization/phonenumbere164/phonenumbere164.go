@@ -29,12 +29,16 @@ func New(specifier string) (*E164, error) {
 	if len(parts) > 1 {
 		if parts[1] == "extensions" {
 			normalizer.extensions = true
-			if len(parts) > 2 && supportedRegions[parts[2]] {
+			if len(parts) > 2 {
 				normalizer.defaultRegion = parts[2]
 			}
-		} else if supportedRegions[parts[1]] {
+		} else {
 			normalizer.defaultRegion = parts[1]
 		}
+	}
+
+	if !supportedRegions[normalizer.defaultRegion] {
+		return nil, fmt.Errorf("Unrecognized default region: %s", normalizer.defaultRegion)
 	}
 
 	return normalizer, nil

@@ -63,3 +63,15 @@ func TestE164ExtentionsApply(t *testing.T) {
 		}
 	}
 }
+
+func TestE164BadRegionApply(t *testing.T) {
+	_, err := phonenumbere164.New("phonenumbere164-extensions-ZZZ")
+	if err == nil {
+		t.Errorf("expected 'Unrecognized default region' error")
+	}
+
+	_, err = phonenumbere164.New("phonenumbere164-YY")
+	if err == nil {
+		t.Errorf("expected 'Unrecognized default region' error")
+	}
+}
