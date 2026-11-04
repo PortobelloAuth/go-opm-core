@@ -2,18 +2,24 @@ package diacriticalts
 
 import (
 	"fmt"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/fold"
 	goprojectusat "github.com/PortobelloAuth/go-projectusat/pkg/diacritics"
 	anyascii "github.com/anyascii/go"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 )
 
+var folder *fold.Fold
+
 func init() {
+	var err error
+	// we're using the fold normalization so that we only have 1 implmentation
+	// of diacritic folding in the project (not counting diacritic tranliteration and
+	// Pub28-specified substitution.)
+	folder, err = fold.New("fold")
+	if err != nil {
+		panic(err)
+	}
 	demographicalts.Register("diacritics", func(s string) (demographicalts.DemographicAlternativesFn, error) {
 		return DemographicAlternatives, nil
 	})
@@ -45,8 +51,9 @@ func Fold(dv string, name string, l int) []demographicalts.DemographicAlternativ
 		Score: 0,
 	})
 
-	folded := fold(dv)
-	if folded != dv {
+	folded, err := folder.Apply(dv)
+	// err should never NOT be nil, but we'll be careful here anyway
+	if err == nil && folded != dv {
 		a = append(a, demographicalts.DemographicAlternative{
 			Label: fmt.Sprintf("%s|fold", name),
 			Text:  folded,
@@ -55,27 +62,6 @@ func Fold(dv string, name string, l int) []demographicalts.DemographicAlternativ
 	}
 
 	return a
-}
-
-// fold implements diacritic folding by removing unicode nonspacing marks
-func fold(s string) string {
-	if isASCII(s) {
-		return s
-	}
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	// None of the chained transformers can fail: invalid UTF-8 is replaced with
-	// U+FFFD rather than reported.
-	folded, _, _ := transform.String(t, s)
-	return folded
-}
-
-func isASCII(s string) bool {
-	for i := range len(s) {
-		if s[i] >= utf8.RuneSelf {
-			return false
-		}
-	}
-	return true
 }
 
 func Transliterate(dv string, name string, l int) []demographicalts.DemographicAlternative {

@@ -7,6 +7,7 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/address"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/dateofbirth"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/digits"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/fold"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/lowercase"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/phonenumbere164"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/punctuation"
@@ -50,6 +51,7 @@ func init() {
 		{"address", func(specifier string) (Normalization, error) { return address.New(specifier) }},
 		{"dateofbirth", func(specifier string) (Normalization, error) { return dateofbirth.New(specifier) }},
 		{"digits", func(specifier string) (Normalization, error) { return digits.New(specifier) }},
+		{"fold", func(specifier string) (Normalization, error) { return fold.New(specifier) }},
 		{"lowercase", func(specifier string) (Normalization, error) { return lowercase.New(specifier) }},
 		{"phonenumbere164", func(specifier string) (Normalization, error) { return phonenumbere164.New(specifier) }},
 		{"punctuation", func(specifier string) (Normalization, error) { return punctuation.New(specifier) }},
