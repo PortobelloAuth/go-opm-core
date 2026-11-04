@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/address"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/dateofbirth"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/digits"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/lowercase"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/phonenumbere164"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/punctuation"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/replace"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/transliterate"
@@ -45,7 +48,10 @@ func init() {
 		N func(specifier string) (Normalization, error)
 	}{
 		{"address", func(specifier string) (Normalization, error) { return address.New(specifier) }},
+		{"dateofbirth", func(specifier string) (Normalization, error) { return dateofbirth.New(specifier) }},
+		{"digits", func(specifier string) (Normalization, error) { return digits.New(specifier) }},
 		{"lowercase", func(specifier string) (Normalization, error) { return lowercase.New(specifier) }},
+		{"phonenumbere164", func(specifier string) (Normalization, error) { return phonenumbere164.New(specifier) }},
 		{"punctuation", func(specifier string) (Normalization, error) { return punctuation.New(specifier) }},
 		{"transliterate", func(specifier string) (Normalization, error) { return transliterate.New(specifier) }},
 		{"uppercase", func(specifier string) (Normalization, error) { return uppercase.New(specifier) }},
