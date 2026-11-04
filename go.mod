@@ -9,11 +9,14 @@ require (
 	lukechampine.com/blake3 v1.4.1
 )
 
+require google.golang.org/protobuf v1.36.11 // indirect
+
 require (
 	github.com/bits-and-blooms/bitset v1.25.0 // indirect
 	github.com/bits-and-blooms/bloom/v3 v3.7.1 // indirect
 	github.com/hbollon/go-edlib v1.7.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/nyaruka/phonenumbers v1.8.1
 	github.com/poetic-systems/addresstables v0.1.0-alpha.0 // indirect
 	github.com/poetic-systems/zipcity v0.1.0-alpha.3 // indirect
 	golang.org/x/sys v0.46.0 // indirect
