@@ -27,17 +27,17 @@ func TestDiacriticAltsFn(t *testing.T) {
 		out := fn(tc.in, "test", 0)
 
 		if len(out) != len(tc.want) {
-			t.Fatalf("Unexpected number of results diacritics demographic alternatives function: %d want: %d", len(out), len(tc.want))
+			t.Errorf("Unexpected number of results diacritics demographic alternatives function: %d want: %d | %v", len(out), len(tc.want), out)
 		}
 
 		checked := make([]string, 0)
 		for _, o := range out {
 			if !slices.Contains(tc.want, o.Text) {
-				t.Fatalf("Unexpected text from diacritics demographic alternatives function: %s want one of %v", o.Text, tc.want)
+				t.Errorf("Unexpected text from diacritics demographic alternatives function: %s want one of %v", o.Text, tc.want)
 			}
 
 			if slices.Contains(checked, o.Text) {
-				t.Fatalf("Unexpected repeat text from diacritics demographic alternatives function: %s %v", o.Text, out)
+				t.Errorf("Unexpected repeat text from diacritics demographic alternatives function: %s %v", o.Text, out)
 			}
 			checked = append(checked, o.Text)
 		}
