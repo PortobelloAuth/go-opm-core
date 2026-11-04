@@ -123,6 +123,16 @@ func New(specifier string) (Normalization, error) {
 	if found {
 		k = prefixKey(prefix)
 	}
+
+	// split specifier key at the first hyphen
+	prefix, _, found = strings.Cut(k, "-")
+	if found {
+		fn, ok := normalizationRegistery[prefix]
+		if ok {
+			return fn(specifier)
+		}
+	}
+
 	fn, ok := normalizationRegistery[k]
 	if ok {
 		return fn(specifier)

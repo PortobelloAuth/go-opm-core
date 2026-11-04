@@ -2,21 +2,46 @@ package phonenumbere164
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nyaruka/phonenumbers"
 )
 
-type E164 struct{}
+var supportedRegions = phonenumbers.GetSupportedRegions()
 
-func New(specifier string) (*E164, error) {
-	if specifier != "phonenumbere164" {
-		return nil, fmt.Errorf("invalid specifier: %s", specifier)
-	}
-	return &E164{}, nil
+type E164 struct {
+	extensions    bool
+	defaultRegion string
 }
 
-func (l *E164) Apply(input string) (string, error) {
-	num, err := phonenumbers.Parse(input, "US")
+func New(specifier string) (*E164, error) {
+	parts := strings.Split(specifier, "-")
+
+	if len(parts) < 1 || parts[0] != "phonenumbere164" {
+		return nil, fmt.Errorf("invalid specifier: %s", specifier)
+	}
+
+	normalizer := &E164{
+		extensions:    false,
+		defaultRegion: "US",
+	}
+
+	if len(parts) > 1 {
+		if parts[1] == "extensions" {
+			normalizer.extensions = true
+			if len(parts) > 2 && supportedRegions[parts[2]] {
+				normalizer.defaultRegion = parts[2]
+			}
+		} else if supportedRegions[parts[1]] {
+			normalizer.defaultRegion = parts[1]
+		}
+	}
+
+	return normalizer, nil
+}
+
+func (e164 *E164) Apply(input string) (string, error) {
+	num, err := phonenumbers.Parse(input, e164.defaultRegion)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse: %w", err)
 	}
@@ -26,6 +51,10 @@ func (l *E164) Apply(input string) (string, error) {
 		return "", fmt.Errorf("invalid phone number for parsed region")
 	}
 
-	// Format to strict E.164 (+15551234567)
-	return phonenumbers.Format(num, phonenumbers.E164), nil
+	formatted := phonenumbers.Format(num, phonenumbers.E164)
+	ext := num.GetExtension()
+	if e164.extensions && len(ext) > 0 {
+		formatted = fmt.Sprintf("%s x%s", formatted, ext)
+	}
+	return formatted, nil
 }
