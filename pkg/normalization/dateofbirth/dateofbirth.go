@@ -8,7 +8,7 @@ import (
 type DateOfBirth struct{}
 
 var supportedDateLayouts = map[string][]string{
-	"2006/01/02": {
+	"2006-01-02": {
 		"2006/01/02",
 		"20060102",
 		"2006-01-02",
@@ -32,7 +32,7 @@ var supportedDateLayouts = map[string][]string{
 		"2/1/2006",
 		"2-1-2006",
 	},
-	"2006/01": {
+	"2006-01": {
 		"2006/01",
 		"200601",
 		"2006-01",
