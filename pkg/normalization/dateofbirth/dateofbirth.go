@@ -50,22 +50,16 @@ func New(specifier string) (*DateOfBirth, error) {
 	return &DateOfBirth{}, nil
 }
 
-func (l *DateOfBirth) Apply(input string) (string, error) {
+func (dob *DateOfBirth) Apply(input string) (string, error) {
 	result := ""
 	for format, layouts := range supportedDateLayouts {
 		for _, layout := range layouts {
 			t, err := time.Parse(layout, input)
 			if err == nil {
-				// make sure the date is within the expected range
-				// TODO: consider moving this specifically to something
-				// like placeholder.DateRangeCheck
-				y, m, d := time.Now().Date()
-				first := time.Date(y-120, m, d, 0, 0, 0, 0, time.UTC)
-				last := time.Date(y, m, d+2, 0, 0, 0, 0, time.UTC)
-				if t.After(first) && t.Before(last) {
+				if DateRangeCheck(t) {
 					result = t.Format(format)
+					break
 				}
-				break
 			}
 		}
 	}
@@ -75,4 +69,14 @@ func (l *DateOfBirth) Apply(input string) (string, error) {
 	}
 
 	return result, nil
+}
+
+func DateRangeCheck(t time.Time) bool {
+	y, m, d := time.Now().Date()
+	first := time.Date(y-120, m, d, 0, 0, 0, 0, time.UTC)
+	last := time.Date(y, m, d+2, 0, 0, 0, 0, time.UTC)
+	if t.After(first) && t.Before(last) {
+		return true
+	}
+	return false
 }

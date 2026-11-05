@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
+	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/dateofbirth"
 )
 
 func init() {
@@ -25,27 +26,29 @@ func PlusOrMinus1Day(dv string, name string, l int) []demographicalts.Demographi
 
 	t, err := time.Parse(isodate, dv)
 	if err != nil {
-		// if we can't parse it then something else failed first; just
-		// return the original value.
-		// TODO: consider if this is really how we want to handle errors
-		// in Demographic Alternatives functions.
+		// if we can't parse it then we do not have a day from which to
+		// calculate +/- 1 Day; just return the original value.
 		return a
 	}
 
 	plus1 := t.Add(24 * time.Hour)
 	minus1 := t.Add(-24 * time.Hour)
 
-	a = append(a, demographicalts.DemographicAlternative{
-		Label: fmt.Sprintf("%s|plus1day", name),
-		Text:  plus1.Format(isodate),
-		Score: 0,
-	})
+	if dateofbirth.DateRangeCheck(plus1) {
+		a = append(a, demographicalts.DemographicAlternative{
+			Label: fmt.Sprintf("%s|plus1day", name),
+			Text:  plus1.Format(isodate),
+			Score: 0,
+		})
+	}
 
-	a = append(a, demographicalts.DemographicAlternative{
-		Label: fmt.Sprintf("%s|minus1day", name),
-		Text:  minus1.Format(isodate),
-		Score: 0,
-	})
+	if dateofbirth.DateRangeCheck(minus1) {
+		a = append(a, demographicalts.DemographicAlternative{
+			Label: fmt.Sprintf("%s|minus1day", name),
+			Text:  minus1.Format(isodate),
+			Score: 0,
+		})
+	}
 
 	return a
 }

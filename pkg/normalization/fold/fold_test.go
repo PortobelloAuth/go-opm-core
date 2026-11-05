@@ -6,7 +6,7 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization/fold"
 )
 
-func TestPuntuationApply(t *testing.T) {
+func TestFoldApply(t *testing.T) {
 	input := "René François Lacôte"
 	expected := "Rene Francois Lacote"
 
