@@ -18,7 +18,7 @@ import (
 //
 // Second, it runs the hash function again with
 //
-//	`HashFn(append(base, randomBits...), salt)`
+//	`HashFn(slices.Concat(base, randomBits), salt)`
 //
 // where random bits is between 8 and 16 bits (at this time.) These bits are not
 // disclosed to the reciever. This creates a challenge where the reciever must know
@@ -82,7 +82,7 @@ func (x *X2R) hashChallenge(source []byte, salt []byte, pepper []byte) ([]byte, 
 		return nil, fmt.Errorf("error generating base hash: %w", err)
 	}
 
-	l2 := append(base, pepper...)
+	l2 := slices.Concat(base, pepper)
 	h, err := x.Hash.HashFn(l2, salt)
 	if err != nil {
 		return nil, fmt.Errorf("error generating layer 2 hash: %w", err)
