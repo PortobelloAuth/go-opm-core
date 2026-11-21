@@ -54,7 +54,7 @@ func TestPlaintextMatch(t *testing.T) {
 	}
 
 	if !result {
-		t.Fatalf("Match %v and %v should be true: %v", check, against_fail, result)
+		t.Fatalf("Match %v and %v should be true: %v", check, against_succeed, result)
 	}
 }
 

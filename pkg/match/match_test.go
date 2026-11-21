@@ -7,19 +7,21 @@ import (
 
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 	_ "github.com/PortobelloAuth/go-opm-core/pkg/demographicalts/diacriticalts"
-	"github.com/PortobelloAuth/go-opm-core/pkg/hashing"
-	"github.com/PortobelloAuth/go-opm-core/pkg/hashing/noop"
 	"github.com/PortobelloAuth/go-opm-core/pkg/match"
+	"github.com/PortobelloAuth/go-opm-core/pkg/match/matcher/componentmatcher"
+	"github.com/PortobelloAuth/go-opm-core/pkg/match/matcher/plaintextcomponent"
 	"github.com/PortobelloAuth/go-opm-core/pkg/normalization"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
 )
 
 func TestMatch(t *testing.T) {
 	var testcases = []struct {
+		Name   string
 		Raw    map[string]string
 		Hashes map[string][]string
 	}{
 		{
+			Name: "diacritic in family name",
 			Raw: map[string]string{
 				"given":  "Maria",
 				"family": "García",
@@ -30,6 +32,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			Name: "diacritic in given and family name",
 			Raw: map[string]string{
 				"given":  "José",
 				"family": "López",
@@ -40,6 +43,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			Name: "no diacritics in names",
 			Raw: map[string]string{
 				"given":  "Myra",
 				"family": "Jones",
@@ -50,13 +54,6 @@ func TestMatch(t *testing.T) {
 			},
 		},
 	}
-
-	noopHash, err := hashing.New("Noop")
-	if err != nil {
-		t.Fatalf("Unable to instatiate Noop (non-)hashing algorithm: %s", err)
-	}
-
-	noopSalt := []byte{} // empty salt doesn't matter for Noop
 
 	lower, err := normalization.New("lowercase")
 	if err != nil {
@@ -78,35 +75,36 @@ func TestMatch(t *testing.T) {
 		},
 	}
 
+	plaintext := plaintextcomponent.New(testRules)
+
 	for _, tc := range testcases {
-		rawDemographics := &match.Demographics{
-			Raw: tc.Raw,
-		}
-
-		result, err := match.Match(
-			rawDemographics,
-			&match.HashedDemographics{
-				HashAlgorithm: noopHash.HashFunc,
-				Salt:          noopSalt,
-				Hashes:        tc.Hashes,
-				Encode:        match.HashToString,
-				RuleSet:       testRules,
-			},
-		)
-		if err != nil {
-			t.Fatalf("Unexpected error determining match status: %s", err)
-		}
-
-		if !result.Matched {
-			t.Fatalf("Expected match status to be true: %v", result)
-		}
-
-		for hkey := range tc.Hashes {
-			d, ok := result.Detail[hkey]
-			if !(ok && d) {
-				t.Fatalf("Expected match details for %s to be true: %v", hkey, result)
+		t.Run(tc.Name, func(t *testing.T) {
+			rawDemographics := &match.Demographics{
+				Raw: tc.Raw,
 			}
-		}
+
+			result, err := match.Match(
+				rawDemographics,
+				&match.HashedDemographics{
+					Hashes:  tc.Hashes,
+					Matcher: plaintext,
+				},
+			)
+			if err != nil {
+				t.Fatalf("Unexpected error determining match status: %s", err)
+			}
+
+			if !result.Matched {
+				t.Errorf("Expected match status to be true: %v", result)
+			}
+
+			for hkey := range tc.Hashes {
+				d, ok := result.Detail[hkey]
+				if !(ok && d) {
+					t.Errorf("Expected match details for %s to be true: %v", hkey, result)
+				}
+			}
+		})
 	}
 }
 
@@ -152,12 +150,14 @@ func (n *ErrorNoop) HashFunc(source string, salt []byte) ([]byte, error) {
 
 func TestMatchWithErrors(t *testing.T) {
 	var testcases = []struct {
+		Name   string
 		Raw    map[string]string
 		Hashes map[string][]string
 		Result bool
 		Error  error
 	}{
 		{
+			Name: "diacritic in family name, no error",
 			Raw: map[string]string{
 				"given":  "Maria",
 				"family": "García",
@@ -171,6 +171,7 @@ func TestMatchWithErrors(t *testing.T) {
 			Error:  nil,
 		},
 		{
+			Name: "diacritic in family name, with normailzation error",
 			Raw: map[string]string{
 				"given":  "José",
 				"family": "López",
@@ -184,6 +185,7 @@ func TestMatchWithErrors(t *testing.T) {
 			Error:  testNormalizationError,
 		},
 		{
+			Name: "no diacritics in names, with hashing error",
 			Raw: map[string]string{
 				"given":  "Myra",
 				"family": "Jones",
@@ -197,6 +199,7 @@ func TestMatchWithErrors(t *testing.T) {
 			Error:  testHashError,
 		},
 		{
+			Name: "non-match, no diacritics in names, with hashing error",
 			Raw: map[string]string{
 				"given":  "Myra",
 				"family": "Jones",
@@ -211,7 +214,7 @@ func TestMatchWithErrors(t *testing.T) {
 		},
 	}
 
-	noopHash, err := NewErrorNoop()
+	errNoop, err := NewErrorNoop()
 	if err != nil {
 		t.Fatalf("Unable to instatiate ErrorNoop test (non-)hashing algorithm: %s", err)
 	}
@@ -246,41 +249,48 @@ func TestMatchWithErrors(t *testing.T) {
 		},
 	}
 
+	matcher := componentmatcher.New(
+		testRules,
+		errNoop.HashFunc,
+		// empty salt does not matter for noop
+		noopSalt,
+		plaintextcomponent.PlaintextHashToString,
+	)
+
 	for _, tc := range testcases {
-		rawDemographics := &match.Demographics{
-			Raw: tc.Raw,
-		}
+		t.Run(tc.Name, func(t *testing.T) {
+			rawDemographics := &match.Demographics{
+				Raw: tc.Raw,
+			}
 
-		result, err := match.Match(
-			rawDemographics,
-			&match.HashedDemographics{
-				HashAlgorithm: noopHash.HashFunc,
-				Salt:          noopSalt,
-				Hashes:        tc.Hashes,
-				Encode:        match.HashToString,
-				RuleSet:       testRules,
-			},
-		)
-		if err != nil {
-			t.Fatalf("Unexpected returned error from Match() %q", err)
-		}
+			result, err := match.Match(
+				rawDemographics,
+				&match.HashedDemographics{
+					Hashes:  tc.Hashes,
+					Matcher: matcher,
+				},
+			)
+			if err != nil {
+				t.Fatalf("Unexpected returned error from Match() %q", err)
+			}
 
-		if !errors.Is(result.HashError, tc.Error) {
-			t.Fatalf("Expected match result HashError %q to be %q", err, tc.Error)
-		}
+			if !errors.Is(result.HashError, tc.Error) {
+				t.Errorf("Expected match result HashError %q to be %q", err, tc.Error)
+			}
 
-		if tc.Result != result.Matched {
-			t.Fatalf("Expected match status to be %t: %v", tc.Result, result)
-		}
+			if tc.Result != result.Matched {
+				t.Errorf("Expected match status to be %t: %v", tc.Result, result)
+			}
 
-		if tc.Result {
-			for hkey := range tc.Hashes {
-				d, ok := result.Detail[hkey]
-				if !(ok && d) {
-					t.Fatalf("Expected match details for %s to be true: %v", hkey, result)
+			if tc.Result {
+				for hkey := range tc.Hashes {
+					d, ok := result.Detail[hkey]
+					if !(ok && d) {
+						t.Errorf("Expected match details for %s to be true: %v", hkey, result)
+					}
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -295,12 +305,14 @@ func (l *EmptyNormalizer) Apply(input string) (string, error) {
 	return "", nil
 }
 
-func TestMatchWithBlanks(t *testing.T) {
+func TestMatchWithAllValuesNormalizedToBlanks(t *testing.T) {
 	var testcases = []struct {
+		Name string
 		RawA map[string]string
 		RawB map[string]string
 	}{
 		{
+			Name: "Maria Garcia",
 			RawA: map[string]string{
 				"given":  "Maria",
 				"family": "García",
@@ -312,6 +324,7 @@ func TestMatchWithBlanks(t *testing.T) {
 			},
 		},
 		{
+			Name: "Jose Lopez",
 			RawA: map[string]string{
 				"given":  "José",
 				"family": "López",
@@ -323,6 +336,7 @@ func TestMatchWithBlanks(t *testing.T) {
 			},
 		},
 		{
+			Name: "Myra Jones",
 			RawA: map[string]string{
 				"given":  "Myra",
 				"family": "Jones",
@@ -334,6 +348,7 @@ func TestMatchWithBlanks(t *testing.T) {
 			},
 		},
 		{
+			Name: "Myra Jones != Adam Smith",
 			RawA: map[string]string{
 				"given":  "Myra",
 				"family": "Jones",
@@ -345,19 +360,13 @@ func TestMatchWithBlanks(t *testing.T) {
 			},
 		},
 		{
+			Name: "Empty",
 			RawA: map[string]string{
 				"empty": "",
 			},
 			RawB: map[string]string{},
 		},
 	}
-
-	noopHash, err := noop.New()
-	if err != nil {
-		t.Fatalf("Unable to instatiate noop (non-)hashing algorithm: %s", err)
-	}
-
-	noopSalt := []byte{} // empty salt doesn't matter for Noop
 
 	emptynorm, err := NewEmptyNormalizer()
 	if err != nil {
@@ -378,33 +387,37 @@ func TestMatchWithBlanks(t *testing.T) {
 		},
 	}
 
+	plaintext := plaintextcomponent.New(testRules)
+
 	for _, tc := range testcases {
-		rawADemographics := &match.Demographics{
-			Raw: tc.RawA,
-		}
+		t.Run(tc.Name, func(t *testing.T) {
+			rawADemographics := &match.Demographics{
+				Raw: tc.RawA,
+			}
 
-		hashed, e1, e2 := match.NewHashedDemographics(rawADemographics, noopHash.HashFunc, noopSalt, testRules, match.HashToString)
-		if e1 != nil {
-			t.Errorf("Unexpected hash error from NewHashedDemographics() %q", e1)
-		}
+			hashed, e1, e2 := plaintext.HashDemographics(rawADemographics)
+			if e1 != nil {
+				t.Errorf("Unexpected hash error from plaintext.HashDemographics() %q", e1)
+			}
 
-		if e2 != nil {
-			t.Fatalf("Unexpected fatal error from NewHashedDemographics() %q", e2)
-		}
+			if e2 != nil {
+				t.Fatalf("Unexpected fatal error from plaintext.HashDemographics() %q", e2)
+			}
 
-		result, err := match.Match(
-			&match.Demographics{
-				Raw: tc.RawB,
-			},
-			hashed,
-		)
-		if err != nil {
-			t.Fatalf("Unexpected returned error from Match() %q", err)
-		}
+			result, err := match.Match(
+				&match.Demographics{
+					Raw: tc.RawB,
+				},
+				hashed,
+			)
+			if err != nil {
+				t.Fatalf("Unexpected returned error from Match() %q", err)
+			}
 
-		// when all values normalize to an empty string it should not be possible to match
-		if result.Matched {
-			t.Fatalf("Expected match status to be false: %v", result)
-		}
+			// when all values normalize to an empty string it should not be possible to match
+			if result.Matched {
+				t.Fatalf("Expected match status to be false: %v", result)
+			}
+		})
 	}
 }
