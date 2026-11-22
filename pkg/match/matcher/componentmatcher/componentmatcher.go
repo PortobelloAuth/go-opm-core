@@ -158,7 +158,7 @@ func (m *Matcher) Match(calc, comp *match.HashedDemographics) (*match.MatchResul
 
 				for _, comphash := range check {
 					// only one of the hash alternatives needs to match for each component
-					if ok && havehash == comphash {
+					if havehash == comphash {
 						found = true
 					}
 				}
