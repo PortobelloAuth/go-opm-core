@@ -21,11 +21,12 @@ type Demographics struct {
 }
 
 type HashedDemographics struct {
-	// Hahses contains a map of normalized and hashed demographic alternatives, keyed by the flattened
+	// Hashes contains a map of normalized and hashed demographic alternatives, keyed by the flattened
 	// rule label that produced it.
 	Hashes  map[string][]string
 	Matcher Matcher
 	// Aux exists to allow a Matcher to optionally associate Matcher-specific data with the HashedDemographics
+	// instance during the HashDemographics() call that will be needed later in the Match() call.
 	Aux interface{}
 }
 
