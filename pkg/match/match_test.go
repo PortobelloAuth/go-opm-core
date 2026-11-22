@@ -75,7 +75,10 @@ func TestMatch(t *testing.T) {
 		},
 	}
 
-	plaintext := plaintextcomponent.New(testRules)
+	plaintext, err := plaintextcomponent.New(testRules)
+	if err != nil {
+		t.Fatalf("Unable to instatiate plaintext Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -249,13 +252,16 @@ func TestMatchWithErrors(t *testing.T) {
 		},
 	}
 
-	matcher := componentmatcher.New(
+	matcher, err := componentmatcher.New(
 		testRules,
 		errNoop.HashFunc,
 		// empty salt does not matter for noop
 		noopSalt,
 		plaintextcomponent.PlaintextHashToString,
 	)
+	if err != nil {
+		t.Fatalf("Unable to instatiate componentmatcher Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -387,7 +393,10 @@ func TestMatchWithAllValuesNormalizedToBlanks(t *testing.T) {
 		},
 	}
 
-	plaintext := plaintextcomponent.New(testRules)
+	plaintext, err := plaintextcomponent.New(testRules)
+	if err != nil {
+		t.Fatalf("Unable to instatiate plaintextcomponent Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {

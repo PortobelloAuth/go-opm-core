@@ -1,6 +1,8 @@
 package goopmcore
 
 import (
+	"fmt"
+
 	"github.com/PortobelloAuth/go-opm-core/pkg/match"
 	"github.com/PortobelloAuth/go-opm-core/pkg/match/matcher/plaintextcomponent"
 	"github.com/PortobelloAuth/go-opm-core/pkg/rules"
@@ -12,7 +14,10 @@ import (
 // NOTE: this API explicitly ignores any normalization and hashing errors that may occur
 // so that it can return a simple boolean value
 func PlaintextMatch(check *match.Demographics, against *match.Demographics, withRules *rules.RuleSet) (bool, error) {
-	plaintextmatcher := plaintextcomponent.New(withRules)
+	plaintextmatcher, err := plaintextcomponent.New(withRules)
+	if err != nil {
+		return false, fmt.Errorf("Unable to instatiate plaintext Matcher: %w", err)
+	}
 
 	comp, _, err := plaintextmatcher.HashDemographics(against)
 	if err != nil {

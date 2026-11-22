@@ -21,18 +21,21 @@ type Matcher struct {
 	internal *componentmatcher.Matcher
 }
 
-func New(rs *rules.RuleSet) *Matcher {
-	c := componentmatcher.New(
+func New(rs *rules.RuleSet) (*Matcher, error) {
+	c, err := componentmatcher.New(
 		rs,
 		noopHash.HashFunc,
 		// empty salt does not matter for noop
 		[]byte{},
 		PlaintextHashToString,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Matcher{
 		internal: c,
-	}
+	}, nil
 }
 
 // HashDemographics creates HashedDemographics from Demographics by applying the Matcher's RuleSet

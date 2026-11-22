@@ -80,7 +80,7 @@ func TestMatch(t *testing.T) {
 		t.Fatalf("Unable to instatiate Noop (non-)hashing algorithm: %s", err)
 	}
 
-	matcher := rulematcher.New(
+	matcher, err := rulematcher.New(
 		testRules,
 		false,
 		noop.HashFunc,
@@ -88,6 +88,9 @@ func TestMatch(t *testing.T) {
 		[]byte{},
 		plaintextcomponent.PlaintextHashToString,
 	)
+	if err != nil {
+		t.Fatalf("Unable to instatiate rulematcher Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -257,7 +260,7 @@ func TestMatchWithErrors(t *testing.T) {
 		},
 	}
 
-	matcher := rulematcher.New(
+	matcher, err := rulematcher.New(
 		testRules,
 		false,
 		errNoop.HashFunc,
@@ -265,6 +268,9 @@ func TestMatchWithErrors(t *testing.T) {
 		[]byte{},
 		plaintextcomponent.PlaintextHashToString,
 	)
+	if err != nil {
+		t.Fatalf("Unable to instatiate rulematcher Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {
@@ -401,7 +407,7 @@ func TestMatchWithAllValuesNormalizedToBlanks(t *testing.T) {
 		t.Fatalf("Unable to instatiate Noop (non-)hashing algorithm: %s", err)
 	}
 
-	matcher := rulematcher.New(
+	matcher, err := rulematcher.New(
 		testRules,
 		false,
 		noop.HashFunc,
@@ -409,6 +415,9 @@ func TestMatchWithAllValuesNormalizedToBlanks(t *testing.T) {
 		[]byte{},
 		plaintextcomponent.PlaintextHashToString,
 	)
+	if err != nil {
+		t.Fatalf("Unable to instatiate rulematcher Matcher: %s", err)
+	}
 
 	for _, tc := range testcases {
 		t.Run(tc.Name, func(t *testing.T) {

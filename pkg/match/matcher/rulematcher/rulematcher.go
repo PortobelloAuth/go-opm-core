@@ -28,14 +28,19 @@ type Matcher struct {
 	flattenedRuleSet rules.FlattenedRuleSet
 }
 
-func New(rs *rules.RuleSet, hashlabels bool, h hashing.HashFunc, s []byte, enc func([]byte) (string, error)) *Matcher {
-	return &Matcher{
-		HashAlgorithm: h,
-		HashLabels:    hashlabels,
-		Salt:          s,
-		Encode:        enc,
-		Rules:         rs,
+func New(rs *rules.RuleSet, hashlabels bool, h hashing.HashFunc, s []byte, enc func([]byte) (string, error)) (*Matcher, error) {
+	flatrs, err := rs.Flatten()
+	if err != nil {
+		return nil, fmt.Errorf("unable to flatten RuleSet: %w", err)
 	}
+	return &Matcher{
+		HashAlgorithm:    h,
+		HashLabels:       hashlabels,
+		Salt:             s,
+		Encode:           enc,
+		Rules:            rs,
+		flattenedRuleSet: flatrs,
+	}, nil
 }
 
 type RuleValuePartial struct {
@@ -63,14 +68,6 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 	// the Rule.Label to demographics so that hashes for different rules are mapped appropriately.
 
 	flatrules := m.flattenedRuleSet
-	if flatrules == nil {
-		flatrs, err := m.Rules.Flatten()
-		if err != nil {
-			return nil, nil, fmt.Errorf("Unable to apply RuleSet: %w", err)
-		}
-		m.flattenedRuleSet = flatrs
-		flatrules = flatrs
-	}
 
 	hashErrors := make([]error, 0)
 	hashes := map[string][]string{}
