@@ -172,7 +172,6 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 }
 
 func (m *Matcher) Match(calc, comp *match.HashedDemographics) (*match.MatchResult, error) {
-	fmt.Printf("comparing\n\tcalc: %v\n\tcomp: %v\n", calc, comp)
 	// check the resulting hashes maps, which should be keyed by the rule labels for the rules that
 	// generate them, to see which rules actually matched. The values in the hash maps are lists of
 	// hashes to support demographic alternatives (nick names, fuzzy matching, etc.). Only one hash
