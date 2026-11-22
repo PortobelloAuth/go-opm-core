@@ -202,8 +202,10 @@ func (m *Matcher) Match(calc, comp *match.HashedDemographics) (*match.MatchResul
 			if slices.Contains(comphashes, rh) {
 				matched = true
 				detail[label] = true
-				// put the hashed label in detail as well, in case it is needed
-				detail[labelhash] = true
+				if m.HashLabels {
+					// put the hashed label in detail as well, in case it is needed
+					detail[labelhash] = true
+				}
 			}
 		}
 	}
