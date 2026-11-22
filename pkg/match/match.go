@@ -25,6 +25,8 @@ type HashedDemographics struct {
 	// rule label that produced it.
 	Hashes  map[string][]string
 	Matcher Matcher
+	// Aux exists to allow a Matcher to optionally associate Matcher-specific data with the HashedDemographics
+	Aux interface{}
 }
 
 type Matcher interface {
