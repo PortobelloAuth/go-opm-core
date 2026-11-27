@@ -5,14 +5,12 @@ go 1.26.0
 require (
 	github.com/PortobelloAuth/go-projectusat v0.1.0-alpha.4
 	github.com/anyascii/go v0.3.3
+	github.com/vividvilla/metaphone v0.0.0-20170118201335-4634a9b0ec26
 	golang.org/x/crypto v0.53.0
 	lukechampine.com/blake3 v1.4.1
 )
 
-require (
-	github.com/vividvilla/metaphone v0.0.0-20170118201335-4634a9b0ec26 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
-)
+require google.golang.org/protobuf v1.36.11 // indirect
 
 require (
 	github.com/bits-and-blooms/bitset v1.25.0 // indirect
