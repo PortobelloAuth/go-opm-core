@@ -9,7 +9,10 @@ require (
 	lukechampine.com/blake3 v1.4.1
 )
 
-require google.golang.org/protobuf v1.36.11 // indirect
+require (
+	github.com/vividvilla/metaphone v0.0.0-20170118201335-4634a9b0ec26 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
+)
 
 require (
 	github.com/bits-and-blooms/bitset v1.25.0 // indirect
