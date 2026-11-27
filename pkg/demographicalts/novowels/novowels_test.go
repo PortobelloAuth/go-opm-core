@@ -7,7 +7,7 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 )
 
-func TestDiacriticAltsFn(t *testing.T) {
+func TestNoVowelsAltsFn(t *testing.T) {
 	cases := []struct {
 		in   string
 		want []string

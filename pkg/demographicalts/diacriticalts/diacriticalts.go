@@ -13,8 +13,8 @@ var folder *fold.Fold
 
 func init() {
 	var err error
-	// we're using the fold normalization so that we only have 1 implmentation
-	// of diacritic folding in the project (not counting diacritic tranliteration and
+	// we're using the fold normalization so that we only have 1 implementation
+	// of diacritic folding in the project (not counting diacritic transliteration and
 	// Pub28-specified substitution.)
 	folder, err = fold.New("fold")
 	if err != nil {

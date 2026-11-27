@@ -7,7 +7,7 @@ import (
 	"github.com/PortobelloAuth/go-opm-core/pkg/demographicalts"
 )
 
-func TestMetaphoneDiacriticAltsFn(t *testing.T) {
+func TestMetaphoneAltsFn(t *testing.T) {
 	cases := []struct {
 		in   string
 		want []string
@@ -44,7 +44,7 @@ func TestMetaphoneDiacriticAltsFn(t *testing.T) {
 	}
 }
 
-func TestDoubleMetaphoneDiacriticAltsFn(t *testing.T) {
+func TestDoubleMetaphoneAltsFn(t *testing.T) {
 	cases := []struct {
 		in   string
 		want []string

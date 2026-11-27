@@ -13,8 +13,8 @@ var folder *fold.Fold
 
 func init() {
 	var err error
-	// we're using the fold normalization so that we only have 1 implmentation
-	// of diacritic folding in the project (not counting diacritic tranliteration and
+	// we're using the fold normalization so that we only have 1 implementation
+	// of diacritic folding in the project (not counting diacritic transliteration and
 	// Pub28-specified substitution.)
 	folder, err = fold.New("fold")
 	if err != nil {
@@ -38,7 +38,7 @@ func init() {
 		if s == "deletions" {
 			return DeleteNAfterThreshold(1, 5)
 		}
-		return nil, fmt.Errorf("unrecogized deletions specifier")
+		return nil, fmt.Errorf("unrecognized deletions specifier")
 	})
 }
 
@@ -51,38 +51,73 @@ func DeleteNAfterThreshold(n int, threshold int) (demographicalts.DemographicAlt
 			Score: 0,
 		})
 
+		runev := []rune(dv)
+
 		// don't generate alternatives for values that are too short for the threshold or the number of deletions
-		if len(dv) < threshold || len(dv) <= n {
+		if len(runev) < threshold || len(runev) <= n {
 			return a
 		}
 
 		folded, err := folder.Apply(dv)
 		if err == nil {
-			for i := 0; i < len(folded); i++ {
-				s := removeIndex(folded, i)
+			// Convert to runes to handle Unicode characters correctly
+			runes := []rune(folded)
 
+			// Generate all combinations of removing 'n' characters
+			generateDeletions(runes, n, func(s string) {
 				if s != dv {
 					a = append(a, demographicalts.DemographicAlternative{
 						Label: fmt.Sprintf("%s|deletions", name),
 						Text:  s,
-						Score: len(dv) - len(s), // NOTE: never send scores over the wire
+						Score: len(runev) - len([]rune(s)), // NOTE: never send scores over the wire
 					})
 				}
-			}
+			})
 		}
 
 		return a
 	}, nil
 }
 
-func removeIndex(s string, remove int) string {
-	var b strings.Builder
-	b.Grow(len(s) - 1)
+// generateDeletions finds all combinations of removing n characters from the slice
+func generateDeletions(runes []rune, n int, callback func(string)) {
+	length := len(runes)
+	if n <= 0 || n >= length {
+		return
+	}
 
-	for i, char := range s {
-		if i != remove {
-			b.WriteRune(char)
+	// indices holds the positions of the runes we will REMOVE
+	indices := make([]int, n)
+	for i := range indices {
+		indices[i] = i
+	}
+
+	for {
+		// Build the string by excluding the indices in our current combination
+		var b strings.Builder
+		b.Grow(length - n)
+
+		currIdx := 0
+		for i := 0; i < length; i++ {
+			if currIdx < n && i == indices[currIdx] {
+				currIdx++
+				continue
+			}
+			b.WriteRune(runes[i])
+		}
+		callback(b.String())
+
+		// Generate the next lexicographical combination of indices
+		i := n - 1
+		for i >= 0 && indices[i] == length-n+i {
+			i--
+		}
+		if i < 0 {
+			break
+		}
+		indices[i]++
+		for j := i + 1; j < n; j++ {
+			indices[j] = indices[j-1] + 1
 		}
 	}
-	return b.String()
 }

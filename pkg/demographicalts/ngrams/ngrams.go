@@ -14,8 +14,8 @@ var folder *fold.Fold
 
 func init() {
 	var err error
-	// we're using the fold normalization so that we only have 1 implmentation
-	// of diacritic folding in the project (not counting diacritic tranliteration and
+	// we're using the fold normalization so that we only have 1 implementation
+	// of diacritic folding in the project (not counting diacritic transliteration and
 	// Pub28-specified substitution.)
 	folder, err = fold.New("fold")
 	if err != nil {
@@ -47,7 +47,7 @@ func init() {
 		if s == "ngrams" {
 			return NGrams(2, 0)
 		}
-		return nil, fmt.Errorf("unrecogized ngrams specifier")
+		return nil, fmt.Errorf("unrecognized ngrams specifier")
 	})
 }
 
@@ -60,18 +60,19 @@ func NGrams(n int, threshold int) (demographicalts.DemographicAlternativesFn, er
 			Score: 0,
 		})
 
+		runev := []rune(dv)
+
 		// don't generate alternatives for values that are too short for the threshold
-		if len(dv) < threshold {
+		if len(runev) < threshold {
 			return a
 		}
 
 		folded, err := folder.Apply(dv)
 		if err == nil {
-			added := map[string]bool{
-				dv: true,
-			}
-			for i := (1 - n); i < len(folded); i++ {
-				s := ngram(folded, i, n)
+			added := map[string]bool{}
+			runef := []rune(folded)
+			for i := (1 - n); i < len(runef); i++ {
+				s := ngram(runef, i, n)
 
 				_, found := added[s]
 				if !found {
@@ -89,9 +90,10 @@ func NGrams(n int, threshold int) (demographicalts.DemographicAlternativesFn, er
 	}, nil
 }
 
-func ngram(s string, start, length int) string {
+func ngram(s []rune, start, length int) string {
 	var b strings.Builder
 	b.Grow(length)
+	runeswritten := 0
 
 	if start < (1-length) || start >= len(s) {
 		return ""
@@ -101,20 +103,23 @@ func ngram(s string, start, length int) string {
 	// add placeholders for before the start
 	for s := start; s < 0; s++ {
 		b.WriteRune('^')
+		runeswritten++
 	}
 
 	for i, char := range s {
 		if i >= start && i < end {
 			b.WriteRune(char)
+			runeswritten++
 		}
-		if b.Len() >= length {
+		if runeswritten >= length {
 			break
 		}
 	}
 
 	// add placeholders for after the end
-	for b.Len() < length {
+	for runeswritten < length {
 		b.WriteRune('$')
+		runeswritten++
 	}
 
 	return b.String()
