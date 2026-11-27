@@ -23,22 +23,28 @@ func init() {
 
 	demographicalts.Register("deletions", func(s string) (demographicalts.DemographicAlternativesFn, error) {
 		parts := strings.Split(s, "-")
-		if len(parts) == 3 {
-			n, err := strconv.Atoi(parts[1])
+		n := 1
+		t := 5
+		if len(parts) > 1 {
+			var err error
+			n, err = strconv.Atoi(parts[1])
 			if err != nil {
 				return nil, fmt.Errorf("incorrect deletions specifier: number of deletions is not a number")
 			}
-			t, err := strconv.Atoi(parts[2])
-			if err != nil {
-				return nil, fmt.Errorf("incorrect deletions specifier: threshold string length is not a number")
+
+			if n > 3 {
+				return nil, fmt.Errorf("incorrect deletions specifier: more than 3 deletions is not supported")
 			}
 
-			return DeleteNAfterThreshold(n, t)
+			if len(parts) > 2 {
+				t, err = strconv.Atoi(parts[2])
+				if err != nil {
+					return nil, fmt.Errorf("incorrect deletions specifier: threshold string length is not a number")
+				}
+			}
 		}
-		if s == "deletions" {
-			return DeleteNAfterThreshold(1, 5)
-		}
-		return nil, fmt.Errorf("unrecognized deletions specifier")
+
+		return DeleteNAfterThreshold(n, t)
 	})
 }
 
@@ -60,12 +66,14 @@ func DeleteNAfterThreshold(n int, threshold int) (demographicalts.DemographicAlt
 
 		folded, err := folder.Apply(dv)
 		if err == nil {
+			added := map[string]bool{}
 			// Convert to runes to handle Unicode characters correctly
 			runes := []rune(folded)
 
 			// Generate all combinations of removing 'n' characters
 			generateDeletions(runes, n, func(s string) {
-				if s != dv {
+				if !added[s] {
+					added[s] = true
 					a = append(a, demographicalts.DemographicAlternative{
 						Label: fmt.Sprintf("%s|deletions", name),
 						Text:  s,
