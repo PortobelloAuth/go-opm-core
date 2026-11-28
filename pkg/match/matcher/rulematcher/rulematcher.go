@@ -75,6 +75,7 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 	for _, flatrule := range flatrules {
 		// a list of the rule inputs so far
 		partials := make([]RuleValuePartial, 0)
+		componentspresent := 0
 
 		for _, rd := range flatrule.Components {
 			v, ok := raw.Raw[rd.Key]
@@ -102,6 +103,13 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 					altFn = rd.Alternatives
 				}
 				alts := altFn(normv, rd.Key, rd.Limit)
+				if len(alts) < 1 {
+					// no trustworthy values for the component means we must abandon the rule
+					partials = make([]RuleValuePartial, 0)
+					// stop iterating through flatrule.Components
+					break
+				}
+				componentspresent += 1
 				// For each alt and each partial (if there are any) add a new partial
 				newpartials := slices.Collect(func(yield func(RuleValuePartial) bool) {
 					for _, a := range alts {
@@ -138,6 +146,11 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 			}
 		}
 
+		if componentspresent != len(flatrule.Components) {
+			// don't add hashes for rules that didn't have all of their components
+			continue
+		}
+
 		for _, p := range partials {
 			hashv, err := m.hashAndEncode(p.Value)
 			if err != nil {
@@ -159,8 +172,10 @@ func (m *Matcher) HashDemographics(raw *match.Demographics) (*match.HashedDemogr
 			if !ok {
 				existing = make([]string, 0)
 			}
-			existing = append(existing, hashv)
-			hashes[hashkey] = existing
+			if !slices.Contains(existing, hashv) {
+				existing = append(existing, hashv)
+				hashes[hashkey] = existing
+			}
 		}
 	}
 
