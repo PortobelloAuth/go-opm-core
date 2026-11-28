@@ -69,6 +69,9 @@ func NGrams(n int, threshold int) (demographicalts.DemographicAlternativesFn, er
 
 		folded, err := folder.Apply(dv)
 		if err == nil {
+			// NOTE: Do not exclude the original value from ngrams. The ngrams use case should include
+			// the original value - so a rule that requires multiple of these alternatives to match (for
+			// fuzzy matching) works.
 			added := map[string]bool{}
 			runef := []rune(folded)
 			for i := (1 - n); i < len(runef); i++ {

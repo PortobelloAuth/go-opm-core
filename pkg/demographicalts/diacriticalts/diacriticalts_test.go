@@ -20,7 +20,7 @@ func TestDiacriticAltsFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("diacritics")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for diacritics specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for diacritics specifier: %s", err)
 	}
 
 	for _, tc := range cases {

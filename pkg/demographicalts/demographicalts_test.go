@@ -19,7 +19,7 @@ func TestIdentityDemographicAlternativesFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("identity")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for identity specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for identity specifier: %s", err)
 	}
 
 	for _, tc := range cases {

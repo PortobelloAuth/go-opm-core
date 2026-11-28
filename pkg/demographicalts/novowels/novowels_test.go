@@ -20,7 +20,7 @@ func TestNoVowelsAltsFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("novowels")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for novowels specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for novowels specifier: %s", err)
 	}
 
 	for _, tc := range cases {

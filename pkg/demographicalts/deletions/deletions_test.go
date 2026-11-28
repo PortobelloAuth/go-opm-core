@@ -21,7 +21,7 @@ func TestDeletionsAltsFn(t *testing.T) {
 	// get the function (default to 1 deletion if the string is longer than 5 characters)
 	fn, err := demographicalts.New("deletions")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for deletions specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for deletions specifier: %s", err)
 	}
 
 	for _, tc := range cases {
@@ -53,10 +53,10 @@ func TestDeletionCount(t *testing.T) {
 	}{
 		{"deletions-1-0", "chair", 5},  // nCk(5,1) = 5
 		{"deletions-2-0", "chair", 10}, // nCk(5,2) = 10
-		{"deletions-3-0", "chair", 10}, // nCk(5,2) = 10
+		{"deletions-3-0", "chair", 10}, // nCk(5,3) = 10
 		{"deletions-1-0", "Apple", 4},  // nCk(5,1) = 5, but the double letter means duplicates don't get included
 		{"deletions-2-0", "Apple", 7},  // nCk(5,2) = 10, but the double letter means duplicates don't get included
-		{"deletions-3-0", "Apple", 7},  // nCk(5,2) = 10, but the double letter means duplicates don't get included
+		{"deletions-3-0", "Apple", 7},  // nCk(5,3) = 10, but the double letter means duplicates don't get included
 	}
 
 	for _, tc := range cases {

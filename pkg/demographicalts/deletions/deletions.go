@@ -35,6 +35,9 @@ func init() {
 			if n > 3 {
 				return nil, fmt.Errorf("incorrect deletions specifier: more than 3 deletions is not supported")
 			}
+			if n < 1 {
+				return nil, fmt.Errorf("incorrect deletions specifier: cannot delete less than 1 charater")
+			}
 
 			if len(parts) > 2 {
 				t, err = strconv.Atoi(parts[2])
@@ -49,6 +52,13 @@ func init() {
 }
 
 func DeleteNAfterThreshold(n int, threshold int) (demographicalts.DemographicAlternativesFn, error) {
+	if n < 1 {
+		return nil, fmt.Errorf("cannot delete less than 1 character")
+	}
+	if n > 3 {
+		return nil, fmt.Errorf("more than 3 deletions is not supported")
+	}
+
 	return func(dv string, name string, l int) []demographicalts.DemographicAlternative {
 		a := make([]demographicalts.DemographicAlternative, 0)
 		a = append(a, demographicalts.DemographicAlternative{

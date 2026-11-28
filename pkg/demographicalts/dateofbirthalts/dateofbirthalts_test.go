@@ -22,7 +22,7 @@ func TestDateOfBirthAltsFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("dateofbirth")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for dateofbirth specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for dateofbirth specifier: %s", err)
 	}
 
 	for _, tc := range cases {
