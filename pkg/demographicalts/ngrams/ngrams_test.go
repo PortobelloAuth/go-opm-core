@@ -110,9 +110,9 @@ func TestNGramThreshold(t *testing.T) {
 
 func TestInvalidNGramSpecifiers(t *testing.T) {
 	invalid := []string{
-		"ngram-abc-5", // n is not a number
-		"ngram-2-xyz", // t is not a number
-		"ngram-1-5",   // n is less than 2
+		"ngrams-abc-5", // n is not a number
+		"ngrams-2-xyz", // t is not a number
+		"ngrams-1-5",   // n is less than 2
 	}
 
 	for _, spec := range invalid {
