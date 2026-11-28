@@ -20,7 +20,7 @@ func TestMetaphoneAltsFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("metaphone")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for metaphone specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for metaphone specifier: %s", err)
 	}
 
 	for _, tc := range cases {
@@ -57,7 +57,7 @@ func TestDoubleMetaphoneAltsFn(t *testing.T) {
 	// get the function
 	fn, err := demographicalts.New("doublemetaphone")
 	if err != nil {
-		t.Fatalf("Error creating demographic alternatives function for doublemetaphone specifier: error: %s", err)
+		t.Fatalf("Error creating demographic alternatives function for doublemetaphone specifier: %s", err)
 	}
 
 	for _, tc := range cases {
