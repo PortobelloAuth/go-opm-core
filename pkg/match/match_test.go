@@ -430,3 +430,64 @@ func TestMatchWithAllValuesNormalizedToBlanks(t *testing.T) {
 		})
 	}
 }
+
+func TestNilMatcher(t *testing.T) {
+	check := &match.Demographics{
+		Raw: map[string]string{
+			"given":  "Maria",
+			"family": "García",
+		},
+	}
+
+	result, err := match.Match(
+		check,
+		nil,
+	)
+	if result != nil {
+		t.Errorf("Unexpected result from match.Match() against nil: %v", result)
+	}
+	if err == nil {
+		t.Errorf("Unexpected nil error from match.Match() against nil")
+	}
+
+	lower, err := normalization.New("lowercase")
+	if err != nil {
+		t.Fatalf("Failed to initialize %s normalization", "lowercase")
+	}
+
+	testRules := &rules.RuleSet{
+		Normalizations: &normalization.NormalizationSequence{Seq: []normalization.Normalization{lower}},
+		Rules: []rules.Rule{
+			{Label: "fullname", Components: []rules.RuleDemographic{
+				{Label: "given", Key: "given"},
+				{Label: "family", Key: "family"},
+			}},
+		},
+	}
+
+	plaintext, err := plaintextcomponent.New(testRules)
+	if err != nil {
+		t.Fatalf("Unable to instatiate plaintext Matcher: %s", err)
+	}
+	against, e1, e2 := plaintext.HashDemographics(check)
+	if e1 != nil {
+		t.Errorf("Unexpected hash error from plaintext.HashDemographics() %q", e1)
+	}
+	if e2 != nil {
+		t.Fatalf("Unexpected fatal error from plaintext.HashDemographics() %q", e2)
+	}
+
+	// set the Matcher to nil just to test the guard
+	against.Matcher = nil
+
+	r2, err := match.Match(
+		check,
+		against,
+	)
+	if r2 != nil {
+		t.Errorf("Unexpected result from match.Match() against nil: %v", r2)
+	}
+	if err == nil {
+		t.Errorf("Unexpected nil error from match.Match() against comp with nil Matcher")
+	}
+}

@@ -45,6 +45,14 @@ type Matcher interface {
 // using the RuleSet Normalizations, applies the hashing function, and compares the resulting values
 // to the hashed set to see if any of the RuleSet's Rules match.
 func Match(raw *Demographics, comp *HashedDemographics) (*MatchResult, error) {
+	if comp == nil {
+		return nil, fmt.Errorf("comparison not set")
+	}
+
+	if comp.Matcher == nil {
+		return nil, fmt.Errorf("comparison does not provide a Matcher")
+	}
+
 	calc, hasherr, err := comp.Matcher.HashDemographics(raw)
 	if err != nil {
 		return nil, err
